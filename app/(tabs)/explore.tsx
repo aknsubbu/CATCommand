@@ -17,7 +17,7 @@ import FirestoreService, {
   CreateScheduledTaskData,
   CreateWorkOrderData,
   Machine,
-  Operator
+  Operator,
 } from "@/services/FirestoreService";
 
 import type { Alert as FirestoreAlert } from "@/services/FirestoreService";
@@ -49,14 +49,15 @@ export default function TabTwoScreen(): React.ReactElement {
         lastLogin: FirestoreService.dateToTimestamp(new Date()),
         totalHours: 2400,
         safetyScore: 95,
-        efficiencyRating: 87
+        efficiencyRating: 87,
       };
 
       const operatorId = await FirestoreService.createOperator(operatorData);
       setTestResults(`✅ Operator created with ID: ${operatorId}`);
       Alert.alert("Success", `Operator created with ID: ${operatorId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating operator: ${errorMessage}`);
       Alert.alert("Error", `Failed to create operator: ${errorMessage}`);
     } finally {
@@ -76,29 +77,34 @@ export default function TabTwoScreen(): React.ReactElement {
         location: {
           lat: 37.7749,
           lng: -122.4194,
-          timestamp: FirestoreService.dateToTimestamp(new Date())
+          timestamp: FirestoreService.dateToTimestamp(new Date()),
         },
         engineHours: 1524.5,
         fuelLevel: 75,
-        lastMaintenance: FirestoreService.dateToTimestamp(new Date(Date.now() - 86400000)), // Yesterday
-        nextMaintenanceDue: FirestoreService.dateToTimestamp(new Date(Date.now() + 604800000)), // Next week
+        lastMaintenance: FirestoreService.dateToTimestamp(
+          new Date(Date.now() - 86400000)
+        ), // Yesterday
+        nextMaintenanceDue: FirestoreService.dateToTimestamp(
+          new Date(Date.now() + 604800000)
+        ), // Next week
         specifications: {
           maxLoad: 2000,
           fuelCapacity: 400,
-          operatingWeight: 36000
+          operatingWeight: 36000,
         },
         sensors: {
           temperature: 85,
           pressure: 45,
-          vibration: 2.1
-        }
+          vibration: 2.1,
+        },
       };
 
       const machineId = await FirestoreService.createMachine(machineData);
       setTestResults(`✅ Machine created with ID: ${machineId}`);
       Alert.alert("Success", `Machine created with ID: ${machineId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating machine: ${errorMessage}`);
       Alert.alert("Error", `Failed to create machine: ${errorMessage}`);
     } finally {
@@ -122,7 +128,7 @@ export default function TabTwoScreen(): React.ReactElement {
           lat: 37.7849,
           lng: -122.4094,
           address: "Construction Site A, San Francisco, CA",
-          geofenceRadius: 50
+          geofenceRadius: 50,
         },
         checkpoints: [
           {
@@ -131,29 +137,34 @@ export default function TabTwoScreen(): React.ReactElement {
             location: { lat: 37.7849, lng: -122.4094 },
             completed: false,
             completedAt: null,
-            gpsTagged: false
+            gpsTagged: false,
           },
           {
             id: "checkpoint_2",
             name: "Excavation Area",
-            location: { lat: 37.7850, lng: -122.4095 },
+            location: { lat: 37.785, lng: -122.4095 },
             completed: false,
             completedAt: null,
-            gpsTagged: false
-          }
+            gpsTagged: false,
+          },
         ],
-        scheduledStart: FirestoreService.dateToTimestamp(new Date(Date.now() + 86400000)), // Tomorrow
-        scheduledEnd: FirestoreService.dateToTimestamp(new Date(Date.now() + 115200000)), // Tomorrow + 8 hours
+        scheduledStart: FirestoreService.dateToTimestamp(
+          new Date(Date.now() + 86400000)
+        ), // Tomorrow
+        scheduledEnd: FirestoreService.dateToTimestamp(
+          new Date(Date.now() + 115200000)
+        ), // Tomorrow + 8 hours
         actualStart: null,
         actualEnd: null,
-        createdBy: "supervisor_001"
+        createdBy: "supervisor_001",
       };
 
       const workOrderId = await FirestoreService.createWorkOrder(workOrderData);
       setTestResults(`✅ Work Order created with ID: ${workOrderId}`);
       Alert.alert("Success", `Work Order created with ID: ${workOrderId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating work order: ${errorMessage}`);
       Alert.alert("Error", `Failed to create work order: ${errorMessage}`);
     } finally {
@@ -175,26 +186,27 @@ export default function TabTwoScreen(): React.ReactElement {
         status: "active",
         location: {
           lat: 37.7749,
-          lng: -122.4194
+          lng: -122.4194,
         },
         triggerData: {
           metric: "engine_temperature",
           value: 95,
           threshold: 90,
-          unit: "celsius"
+          unit: "celsius",
         },
         audioPlayed: false,
         acknowledgedBy: null,
         acknowledgedAt: null,
         resolvedBy: null,
-        resolvedAt: null
+        resolvedAt: null,
       };
 
       const alertId = await FirestoreService.createAlert(alertData);
       setTestResults(`✅ Alert created with ID: ${alertId}`);
       Alert.alert("Success", `Alert created with ID: ${alertId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating alert: ${errorMessage}`);
       Alert.alert("Error", `Failed to create alert: ${errorMessage}`);
     } finally {
@@ -211,47 +223,50 @@ export default function TabTwoScreen(): React.ReactElement {
         type: "daily",
         status: "pending",
         checklist: {
-          "safety_001": {
+          safety_001: {
             name: "Seatbelt Check",
             category: "safety",
             required: true,
             status: "pending",
             notes: null,
             photo: null,
-            timestamp: null
+            timestamp: null,
           },
-          "mechanical_001": {
+          mechanical_001: {
             name: "Hydraulic Fluid Level",
             category: "mechanical",
             required: true,
             status: "pending",
             notes: null,
             photo: null,
-            timestamp: null
+            timestamp: null,
           },
-          "fluid_001": {
+          fluid_001: {
             name: "Engine Oil Level",
             category: "fluid",
             required: true,
             status: "pending",
             notes: null,
             photo: null,
-            timestamp: null
-          }
+            timestamp: null,
+          },
         },
         overallResult: "pass",
         startTime: FirestoreService.dateToTimestamp(new Date()),
         endTime: null,
         notes: "",
         photos: [],
-        signature: null
+        signature: null,
       };
 
-      const inspectionId = await FirestoreService.createInspection(inspectionData);
+      const inspectionId = await FirestoreService.createInspection(
+        inspectionData
+      );
       setTestResults(`✅ Inspection created with ID: ${inspectionId}`);
       Alert.alert("Success", `Inspection created with ID: ${inspectionId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating inspection: ${errorMessage}`);
       Alert.alert("Error", `Failed to create inspection: ${errorMessage}`);
     } finally {
@@ -279,20 +294,21 @@ export default function TabTwoScreen(): React.ReactElement {
         location: {
           lat: 37.7749,
           lng: -122.4194,
-          address: "Equipment Yard A"
+          address: "Equipment Yard A",
         },
         requirements: {
           seatbeltCheck: true,
           preInspection: true,
-          specialCertification: null
-        }
+          specialCertification: null,
+        },
       };
 
       const taskId = await FirestoreService.createScheduledTask(taskData);
       setTestResults(`✅ Scheduled Task created with ID: ${taskId}`);
       Alert.alert("Success", `Scheduled Task created with ID: ${taskId}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error creating scheduled task: ${errorMessage}`);
       Alert.alert("Error", `Failed to create scheduled task: ${errorMessage}`);
     } finally {
@@ -304,26 +320,35 @@ export default function TabTwoScreen(): React.ReactElement {
     setLoading(true);
     try {
       let results = "📊 READ OPERATIONS TEST RESULTS:\n\n";
-      
+
       // Test getting all operators
-      const operators: Operator[] = await FirestoreService.getAll<Operator>('operators', { limitCount: 5 });
+      const operators: Operator[] = await FirestoreService.getAll<Operator>(
+        "operators",
+        { limitCount: 5 }
+      );
       results += `✅ Found ${operators.length} operators\n`;
-      
+
       // Test getting all machines
-      const machines: Machine[] = await FirestoreService.getAll<Machine>('machines', { limitCount: 5 });
+      const machines: Machine[] = await FirestoreService.getAll<Machine>(
+        "machines",
+        { limitCount: 5 }
+      );
       results += `✅ Found ${machines.length} machines\n`;
-      
+
       // Test getting active alerts
-      const alerts: Alert[] = await FirestoreService.getAll<Alert>('alerts', { limitCount: 5 });
+      const alerts: Alert[] = await FirestoreService.getAll<Alert>("alerts", {
+        limitCount: 5,
+      });
       results += `✅ Found ${alerts.length} Alerts\n`;
 
       // const alerts: FirestoreAlert[] = await FirestoreService.getActiveAlerts();
       // results += `✅ Found ${alerts.length} active alerts\n`;
-      
+
       setTestResults(results);
       Alert.alert("Read Operations Complete", results);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error in read operations: ${errorMessage}`);
       Alert.alert("Error", `Failed read operations: ${errorMessage}`);
     } finally {
@@ -335,35 +360,42 @@ export default function TabTwoScreen(): React.ReactElement {
     setLoading(true);
     try {
       let results = "✏️ UPDATE OPERATIONS TEST RESULTS:\n\n";
-      
+
       // Get first operator to test update
-      const operators: Operator[] = await FirestoreService.getAll<Operator>('operators', { limitCount: 1 });
+      const operators: Operator[] = await FirestoreService.getAll<Operator>(
+        "operators",
+        { limitCount: 1 }
+      );
       if (operators.length > 0) {
         const operatorId = operators[0].id;
-        await FirestoreService.updateOperatorStatus(operatorId, 'on_break');
+        await FirestoreService.updateOperatorStatus(operatorId, "on_break");
         results += `✅ Updated operator ${operatorId} status to 'on_break'\n`;
       }
-      
+
       // Get first machine to test update
-      const machines: Machine[] = await FirestoreService.getAll<Machine>('machines', { limitCount: 1 });
+      const machines: Machine[] = await FirestoreService.getAll<Machine>(
+        "machines",
+        { limitCount: 1 }
+      );
       if (machines.length > 0) {
         const machineId = machines[0].id;
         await FirestoreService.updateMachineFuelLevel(machineId, 85);
         results += `✅ Updated machine ${machineId} fuel level to 85%\n`;
       }
-      
+
       // Get first alert to test acknowledgment
       const alerts: FirestoreAlert[] = await FirestoreService.getActiveAlerts();
       if (alerts.length > 0) {
         const alertId = alerts[0].id;
-        await FirestoreService.acknowledgeAlert(alertId, 'supervisor_001');
+        await FirestoreService.acknowledgeAlert(alertId, "supervisor_001");
         results += `✅ Acknowledged alert ${alertId}\n`;
       }
-      
+
       setTestResults(results);
       Alert.alert("Update Operations Complete", results);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setTestResults(`❌ Error in update operations: ${errorMessage}`);
       Alert.alert("Error", `Failed update operations: ${errorMessage}`);
     } finally {
@@ -375,7 +407,11 @@ export default function TabTwoScreen(): React.ReactElement {
     setTestResults("");
   };
 
-  const TestButton: React.FC<TestButtonProps> = ({ title, onPress, color = "#007AFF" }) => (
+  const TestButton: React.FC<TestButtonProps> = ({
+    title,
+    onPress,
+    color = "#007AFF",
+  }) => (
     <TouchableOpacity
       style={[styles.testButton, { backgroundColor: color }]}
       onPress={onPress}
@@ -405,17 +441,42 @@ export default function TabTwoScreen(): React.ReactElement {
 
       <Collapsible title="🚀 Create Sample Data">
         <ThemedText style={styles.description}>
-          Click the buttons below to create sample data in Firestore collections.
-          This will test the CREATE operations of your CAT Command services.
+          Click the buttons below to create sample data in Firestore
+          collections. This will test the CREATE operations of your CAT Command
+          services.
         </ThemedText>
-        
+
         <ThemedView style={styles.buttonContainer}>
-          <TestButton title="Create Operator" onPress={createSampleOperator} color="#4CAF50" />
-          <TestButton title="Create Machine" onPress={createSampleMachine} color="#2196F3" />
-          <TestButton title="Create Work Order" onPress={createSampleWorkOrder} color="#FF9800" />
-          <TestButton title="Create Alert" onPress={createSampleAlert} color="#F44336" />
-          <TestButton title="Create Inspection" onPress={createSampleInspection} color="#9C27B0" />
-          <TestButton title="Create Scheduled Task" onPress={createSampleScheduledTask} color="#607D8B" />
+          <TestButton
+            title="Create Operator"
+            onPress={createSampleOperator}
+            color="#4CAF50"
+          />
+          <TestButton
+            title="Create Machine"
+            onPress={createSampleMachine}
+            color="#2196F3"
+          />
+          <TestButton
+            title="Create Work Order"
+            onPress={createSampleWorkOrder}
+            color="#FF9800"
+          />
+          <TestButton
+            title="Create Alert"
+            onPress={createSampleAlert}
+            color="#F44336"
+          />
+          <TestButton
+            title="Create Inspection"
+            onPress={createSampleInspection}
+            color="#9C27B0"
+          />
+          <TestButton
+            title="Create Scheduled Task"
+            onPress={createSampleScheduledTask}
+            color="#607D8B"
+          />
         </ThemedView>
       </Collapsible>
 
@@ -423,11 +484,23 @@ export default function TabTwoScreen(): React.ReactElement {
         <ThemedText style={styles.description}>
           Test various READ and UPDATE operations on your Firestore data.
         </ThemedText>
-        
+
         <ThemedView style={styles.buttonContainer}>
-          <TestButton title="Test Read Operations" onPress={testReadOperations} color="#00BCD4" />
-          <TestButton title="Test Update Operations" onPress={testUpdateOperations} color="#8BC34A" />
-          <TestButton title="Clear Results" onPress={clearTestResults} color="#795548" />
+          <TestButton
+            title="Test Read Operations"
+            onPress={testReadOperations}
+            color="#00BCD4"
+          />
+          <TestButton
+            title="Test Update Operations"
+            onPress={testUpdateOperations}
+            color="#8BC34A"
+          />
+          <TestButton
+            title="Clear Results"
+            onPress={clearTestResults}
+            color="#795548"
+          />
         </ThemedView>
       </Collapsible>
 
@@ -444,16 +517,16 @@ export default function TabTwoScreen(): React.ReactElement {
           This implementation includes full TypeScript support:
         </ThemedText>
         <ThemedText style={styles.featureItem}>
-          ✅ <ThemedText type="defaultSemiBold">Strongly Typed:</ThemedText>{" "}
-          All data models have proper TypeScript interfaces
+          ✅ <ThemedText type="defaultSemiBold">Strongly Typed:</ThemedText> All
+          data models have proper TypeScript interfaces
         </ThemedText>
         <ThemedText style={styles.featureItem}>
           📖 <ThemedText type="defaultSemiBold">Type Safety:</ThemedText>{" "}
           Compile-time error checking for all operations
         </ThemedText>
         <ThemedText style={styles.featureItem}>
-          ✏️ <ThemedText type="defaultSemiBold">IntelliSense:</ThemedText>{" "}
-          Full IDE autocompletion and error detection
+          ✏️ <ThemedText type="defaultSemiBold">IntelliSense:</ThemedText> Full
+          IDE autocompletion and error detection
         </ThemedText>
         <ThemedText style={styles.featureItem}>
           🎯 <ThemedText type="defaultSemiBold">Generic Methods:</ThemedText>{" "}
@@ -463,16 +536,22 @@ export default function TabTwoScreen(): React.ReactElement {
 
       <Collapsible title="🔧 Test Async Storage">
         <ThemedText>
-          Press the button below to add a sample item to the offline queue and log all items to the console.
+          Press the button below to add a sample item to the offline queue and
+          log all items to the console.
         </ThemedText>
         <ThemedView style={styles.buttonContainer}>
-          <Button title="Run Async Storage Test" onPress={handleTestAsyncStorage} />
+          <Button
+            title="Run Async Storage Test"
+            onPress={handleTestAsyncStorage}
+          />
           <Button title="Clear Queue" onPress={handleClearQueue} color="red" />
         </ThemedView>
-        
+
         {offlineQueue.length > 0 && (
           <ThemedView style={styles.queueContainer}>
-            <ThemedText type="defaultSemiBold">Queue Items ({offlineQueue.length}):</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              Queue Items ({offlineQueue.length}):
+            </ThemedText>
             {offlineQueue.map((item, index) => (
               <ThemedView key={item.id} style={styles.queueItem}>
                 <ThemedText style={styles.queueItemText}>
@@ -492,8 +571,8 @@ export default function TabTwoScreen(): React.ReactElement {
           The following TypeScript services are available:
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">Operator Service:</ThemedText> Typed
-          user management with status tracking
+          • <ThemedText type="defaultSemiBold">Operator Service:</ThemedText>{" "}
+          Typed user management with status tracking
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
           • <ThemedText type="defaultSemiBold">Machine Service:</ThemedText>{" "}
@@ -512,7 +591,8 @@ export default function TabTwoScreen(): React.ReactElement {
           Strongly typed checklist management
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">Offline Queue Service:</ThemedText>{" "}
+          •{" "}
+          <ThemedText type="defaultSemiBold">Offline Queue Service:</ThemedText>{" "}
           Typed offline synchronization
         </ThemedText>
       </Collapsible>
@@ -522,24 +602,24 @@ export default function TabTwoScreen(): React.ReactElement {
           All Firestore collections have TypeScript interfaces:
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">Operator:</ThemedText> Interface with
-          status unions and certification arrays
+          📁 <ThemedText type="defaultSemiBold">Operator:</ThemedText> Interface
+          with status unions and certification arrays
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">Machine:</ThemedText> Typed equipment
-          with sensor data and location interfaces
+          📁 <ThemedText type="defaultSemiBold">Machine:</ThemedText> Typed
+          equipment with sensor data and location interfaces
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">WorkOrder:</ThemedText> Checkpoint
-          arrays with GPS location typing
+          📁 <ThemedText type="defaultSemiBold">WorkOrder:</ThemedText>{" "}
+          Checkpoint arrays with GPS location typing
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">Alert:</ThemedText> Typed severity
-          levels and trigger data interfaces
+          📁 <ThemedText type="defaultSemiBold">Alert:</ThemedText> Typed
+          severity levels and trigger data interfaces
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">Inspection:</ThemedText> Checklist
-          with item status enums
+          📁 <ThemedText type="defaultSemiBold">Inspection:</ThemedText>{" "}
+          Checklist with item status enums
         </ThemedText>
       </Collapsible>
 
@@ -585,13 +665,13 @@ const styles = StyleSheet.create({
   queueContainer: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
     borderRadius: 8,
   },
   queueItem: {
     marginVertical: 4,
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
     borderRadius: 4,
   },
   queueItemText: {
