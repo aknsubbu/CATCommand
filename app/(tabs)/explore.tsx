@@ -618,8 +618,20 @@ export default function TabTwoScreen(): React.ReactElement {
           severity levels and trigger data interfaces
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">Inspection:</ThemedText>{" "}
-          Checklist with item status enums
+          📁 <ThemedText type="defaultSemiBold">aiInteractions:</ThemedText> AI
+          conversation history and feedback
+        </ThemedText>
+        <ThemedText style={styles.schemaItem}>
+          📁 <ThemedText type="defaultSemiBold">roles:</ThemedText> Role
+          definitions and permissions
+        </ThemedText>
+        <ThemedText style={styles.schemaItem}>
+          📁 <ThemedText type="defaultSemiBold">permissions:</ThemedText> System
+          permissions and access control
+        </ThemedText>
+        <ThemedText style={styles.schemaItem}>
+          📁 <ThemedText type="defaultSemiBold"></ThemedText> User session
+          tracking
         </ThemedText>
       </Collapsible>
 

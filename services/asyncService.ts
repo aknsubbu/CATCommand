@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Buffer } from 'buffer'; // Import Buffer
 import pako from 'pako';
-import { v4 as uuidv4 } from 'uuid';
 
 // --- Interfaces ---
 export interface OfflineQueueItem {
@@ -32,6 +31,14 @@ interface StoredQueueItem extends Omit<OfflineQueueItem, 'data' | 'timestamp' | 
 // --- Offline Queue Service ---
 export class OfflineQueueService {
   private static readonly STORAGE_KEY = '@OfflineQueue:items';
+
+  private static generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
   /**
    * Retrieves and decodes all items from AsyncStorage.
@@ -78,7 +85,7 @@ export class OfflineQueueService {
       const compressedData = pako.deflate(jsonData);
 
       const newItem: OfflineQueueItem = {
-        id: uuidv4(),
+        id: this.generateUUID(),
         ...newItemData,
         attempts: 0,
         maxAttempts: 3,
@@ -232,7 +239,6 @@ class SyncManager {
       console.log(`Processing ${items.length} items...`);
       for (const item of items) {
         await this.syncItem(item);
-        await new Promise(res => setTimeout(res, 500));
       }
     } catch (error) {
       console.error('Error processing queue:', error);
