@@ -68,7 +68,7 @@ export default function LoginScreen() {
               <Ionicons name="storefront" size={60} color={colors.primary} />
               <Text style={styles.title}>Welcome Back</Text>
               <Text style={styles.subtitle}>
-                Sign in to continue shopping with ShopSmart AI
+                Sign in to continue moving with CATCommand
               </Text>
             </View>
 

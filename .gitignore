@@ -37,9 +37,14 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+<<<<<<< HEAD
+.env
+.gitignore
+=======
 
 .env
 
 
 android
 ios
+>>>>>>> 19484aad6c74cf856f87d44bb789cc194394810d
