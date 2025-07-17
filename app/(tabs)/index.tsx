@@ -272,29 +272,7 @@ export default function HomeScreen() {
     );
   };
 
-  const renderFilterChip = (filter: typeof filterOptions[0]) => (
-    <TouchableOpacity
-      key={filter.key}
-      style={[
-        styles.filterChip,
-        activeFilter === filter.key && styles.activeFilterChip
-      ]}
-      onPress={() => setActiveFilter(filter.key)}
-    >
-      <Ionicons
-        name={filter.icon as any}
-        size={16}
-        color={activeFilter === filter.key ? catColors.text.light : catColors.primary}
-        style={{ marginRight: 4 }}
-      />
-      <Text style={[
-        styles.filterChipText,
-        activeFilter === filter.key && styles.activeFilterChipText
-      ]}>
-        {filter.label}
-      </Text>
-    </TouchableOpacity>
-  );
+  
 
   return (
     <View style={styles.container}>
@@ -371,16 +349,13 @@ export default function HomeScreen() {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{workOrders.filter(w => w.priority === 'urgent').length}</Text>
-          <Text style={styles.statLabel}>Urgent</Text>
+          <Text style={styles.statValue}>{workOrders.filter(w => w.status === 'completed').length}</Text>
+          <Text style={styles.statLabel}>Completed</Text>
         </View>
         
       </View>
 
-      {/* Filter Chips */}
-      <View style={styles.filtersContainer}>
-        {filterOptions.map(renderFilterChip)}
-      </View>
+     
 
       {/* Work Orders List */}
       {workOrders.length === 0 && selectedOperatorId ? (
@@ -431,6 +406,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: catColors.background.light,
+    paddingBottom:spacing["5xl"],
+    
   },
   header: {
     flexDirection: "row",
@@ -511,6 +488,8 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: spacing.base,
+    paddingTop:spacing["5xl"],
+    paddingBottom:spacing["5xl"],
   },
   emptyListContainer: {
     flex: 1,

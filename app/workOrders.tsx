@@ -56,7 +56,6 @@ export default function WorkOrderDetailsScreen() {
   const params = useLocalSearchParams();
   const workOrderId = params.workOrderID;
   const { user } = useAuth();
-  console.log(workOrderId);
   
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [loading, setLoading] = useState(true);
