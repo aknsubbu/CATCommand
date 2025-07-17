@@ -28,17 +28,18 @@ interface StoredQueueItem extends Omit<OfflineQueueItem, 'data' | 'timestamp' | 
 }
 
 
+// --- UUID Generator ---
+export const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 // --- Offline Queue Service ---
 export class OfflineQueueService {
   private static readonly STORAGE_KEY = '@OfflineQueue:items';
-
-  private static generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
 
   /**
    * Retrieves and decodes all items from AsyncStorage.
@@ -85,7 +86,7 @@ export class OfflineQueueService {
       const compressedData = pako.deflate(jsonData);
 
       const newItem: OfflineQueueItem = {
-        id: this.generateUUID(),
+        id: generateUUID(),
         ...newItemData,
         attempts: 0,
         maxAttempts: 3,
