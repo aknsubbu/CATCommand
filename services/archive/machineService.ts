@@ -24,7 +24,7 @@ import {
   MaintenanceSchedule,
   PaginatedResponse,
   ServiceResponse,
-} from "../types";
+} from "../../types";
 
 export const machineService = {
   // Create new machine

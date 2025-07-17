@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { Platform, StyleSheet } from "react-native";
 
 import { Collapsible } from "@/components/Collapsible";
-import { DataPushScript } from "@/components/DataPushScript";
+
 import { ExternalLink } from "@/components/ExternalLink";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
@@ -32,7 +32,6 @@ export default function TabTwoScreen() {
           Firestore collections. This will create users, machines, alerts,
           maintenance tasks, AI interactions, and more.
         </ThemedText>
-        <DataPushScript />
       </Collapsible>
 
       <Collapsible title="📊 Available Services">

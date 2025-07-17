@@ -23,7 +23,7 @@ import {
   UserProfile,
   UserQueryOptions,
   UserRole,
-} from "../types";
+} from "../../types";
 
 export const userService = {
   // Create new user profile

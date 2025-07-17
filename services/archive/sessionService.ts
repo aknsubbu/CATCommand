@@ -14,7 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { DeviceInfo, ServiceResponse, UserSession } from "../types";
+import { DeviceInfo, ServiceResponse, UserSession } from "../../types";
 
 export const sessionService = {
   // Create new session
