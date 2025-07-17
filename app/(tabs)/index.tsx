@@ -18,6 +18,7 @@ import FirestoreService, {
   WorkOrder
 } from "@/services/FirestoreService";
 
+
 // CAT Color Scheme
 const catColors = {
   primary: "#FFCD11", // CAT Yellow
@@ -71,85 +72,9 @@ interface Checkpoint {
   completedBy?: string;
 }
 
-interface WorkOrder extends BaseDocument {
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  assignedOperatorId: string;
-  assignedMachineId?: string;
-  scheduledStart: any; // Timestamp
-  scheduledEnd: any; // Timestamp
-  actualStart?: any; // Timestamp
-  actualEnd?: any; // Timestamp
-  checkpoints: Checkpoint[];
-  location: Location;
-  estimatedDuration: number;
-  notes?: string;
-}
 
-// Mock data for demonstration
-const mockWorkOrders: WorkOrder[] = [
-  {
-    id: "1",
-    title: "Hydraulic System Maintenance",
-    description: "Routine maintenance on CAT 320 excavator hydraulic system",
-    priority: "high",
-    status: "pending",
-    assignedOperatorId: "op001",
-    assignedMachineId: "CAT320-001",
-    scheduledStart: new Date("2025-07-18T08:00:00"),
-    scheduledEnd: new Date("2025-07-18T12:00:00"),
-    checkpoints: [
-      { id: "c1", title: "Check fluid levels", isCompleted: false },
-      { id: "c2", title: "Inspect hoses", isCompleted: false },
-    ],
-    location: { building: "Maintenance Bay", floor: "1", room: "Bay A" },
-    estimatedDuration: 240,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "Engine Oil Change",
-    description: "Scheduled oil change for CAT D6 bulldozer",
-    priority: "medium",
-    status: "in_progress",
-    assignedOperatorId: "op002",
-    assignedMachineId: "CATD6-002",
-    scheduledStart: new Date("2025-07-17T14:00:00"),
-    scheduledEnd: new Date("2025-07-17T16:00:00"),
-    actualStart: new Date("2025-07-17T14:15:00"),
-    checkpoints: [
-      { id: "c3", title: "Drain old oil", isCompleted: true, completedAt: new Date() },
-      { id: "c4", title: "Replace filter", isCompleted: false },
-    ],
-    location: { building: "Service Center", floor: "1", room: "Bay B" },
-    estimatedDuration: 120,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    title: "Track Belt Replacement",
-    description: "Replace worn track belt on CAT 315 excavator",
-    priority: "urgent",
-    status: "pending",
-    assignedOperatorId: "op003",
-    assignedMachineId: "CAT315-003",
-    scheduledStart: new Date("2025-07-18T06:00:00"),
-    scheduledEnd: new Date("2025-07-18T18:00:00"),
-    checkpoints: [
-      { id: "c5", title: "Remove old track", isCompleted: false },
-      { id: "c6", title: "Install new track", isCompleted: false },
-      { id: "c7", title: "Test alignment", isCompleted: false },
-    ],
-    location: { building: "Heavy Repair", floor: "1", room: "Bay C" },
-    estimatedDuration: 720,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+
+
 
 const filterOptions = [
   { key: "all", label: "All Orders", icon: "list-outline" },
@@ -157,40 +82,6 @@ const filterOptions = [
   { key: "in_progress", label: "In Progress", icon: "play-outline" },
   { key: "completed", label: "Completed", icon: "checkmark-outline" },
 ];
-
-const handleAsyncOperation = async (
-    operationName: string,
-    operation: () => Promise<any>
-  ) => {
-    setLoading(true);
-    try {
-      const result = await operation();
-      const message =
-        typeof result === "string"
-          ? result
-          : typeof result === "object"
-          ? `Success: ${JSON.stringify(result).slice(0, 100)}...`
-          : "Operation completed successfully";
-      addTestResult(operationName, "success", message);
-      Alert.alert("Success", message);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      addTestResult(operationName, "error", errorMessage);
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-const getWorkOrdersByOperator = () =>
-    handleAsyncOperation("Get Work Orders by Operator", async () => {
-      if (!selectedOperatorId) throw new Error("No operator selected");
-      const workOrders = await FirestoreService.getWorkOrdersByOperator(
-        selectedOperatorId
-      );
-      return `Found ${workOrders.length} work orders for operator`;
-    });
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -204,12 +95,7 @@ export default function HomeScreen() {
   const [selectedOperatorId, setSelectedOperatorId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  
-
   useEffect(() => {
-    
-
-
     filterWorkOrders();
   }, [activeFilter, workOrders]);
 
@@ -228,38 +114,7 @@ export default function HomeScreen() {
     }
   };
 
-  // Mock FirestoreService for demonstration - replace with your actual service
-  const FirestoreService = {
-    getWorkOrdersByOperator: async (operatorId: string): Promise<WorkOrder[]> => {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data filtering - replace with actual Firestore call
-      const mockData = mockWorkOrders.filter(order => 
-        order.assignedOperatorId === operatorId
-      );
-      
-      // If no mock data matches, return some sample data for demonstration
-      if (mockData.length === 0 && operatorId.trim()) {
-        return [
-          {
-            ...mockWorkOrders[0],
-            id: `${operatorId}-1`,
-            assignedOperatorId: operatorId,
-            title: `Work Order for Operator ${operatorId}`,
-          },
-          {
-            ...mockWorkOrders[1],
-            id: `${operatorId}-2`,
-            assignedOperatorId: operatorId,
-            title: `Another Task for ${operatorId}`,
-          }
-        ];
-      }
-      
-      return mockData;
-    }
-  };
+  
 
   const getWorkOrdersByOperator = () =>
     handleAsyncOperation("Get Work Orders by Operator", async () => {
@@ -280,7 +135,7 @@ export default function HomeScreen() {
     setSelectedOperatorId(operatorId.trim());
     try {
       await getWorkOrdersByOperator();
-    } catch (error) {
+    } catch {
       // Error already handled in handleAsyncOperation
     }
   };
@@ -305,10 +160,10 @@ export default function HomeScreen() {
       if (selectedOperatorId) {
         await getWorkOrdersByOperator();
       } else {
-        // Simulate refreshing all orders
+        // Load all orders when no operator is selected
         setWorkOrders(mockWorkOrders);
       }
-    } catch (error) {
+    } catch {
       // Error already handled
     } finally {
       setRefreshing(false);
