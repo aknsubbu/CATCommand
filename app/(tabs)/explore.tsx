@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { Platform, StyleSheet } from "react-native";
+import { Button, Platform, StyleSheet } from "react-native";
 
 import { Collapsible } from "@/components/Collapsible";
 
@@ -8,8 +8,47 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { OfflineQueueItem, OfflineQueueService } from "@/services/asyncService";
+import { useState } from "react";
 
 export default function TabTwoScreen() {
+  const [offlineQueue, setOfflineQueue] = useState<OfflineQueueItem[]>([]);
+
+  const handleTestAsyncStorage = async () => {
+    try {
+      console.log("Testing AsyncStorage...");
+      const sampleItem = {
+        operatorId: "op-123",
+        type: "inspection" as const,
+        priority: "high" as const,
+        data: { machineId: "machine-456", inspectionNotes: "All systems nominal." },
+        timestamp: new Date(),
+      };
+      
+      const addedItem = await OfflineQueueService.addItem(sampleItem);
+      console.log("Sample item added to the queue:", addedItem);
+      
+      // Get all items and update state
+      const allItems = await OfflineQueueService.getAllItems();
+      setOfflineQueue(allItems);
+      
+      await OfflineQueueService.logAllItems();
+      console.log("AsyncStorage test completed successfully!");
+    } catch (error) {
+      console.error("Error during AsyncStorage test:", error);
+    }
+  };
+
+  const handleClearQueue = async () => {
+    try {
+      await OfflineQueueService.clearQueue();
+      setOfflineQueue([]);
+      console.log("Queue cleared successfully!");
+    } catch (error) {
+      console.error("Error clearing queue:", error);
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
@@ -32,6 +71,32 @@ export default function TabTwoScreen() {
           Firestore collections. This will create users, machines, alerts,
           maintenance tasks, AI interactions, and more.
         </ThemedText>
+      </Collapsible>
+
+      <Collapsible title="🔧 Test Async Storage">
+        <ThemedText>
+          Press the button below to add a sample item to the offline queue and log all items to the console.
+        </ThemedText>
+        <ThemedView style={styles.buttonContainer}>
+          <Button title="Run Async Storage Test" onPress={handleTestAsyncStorage} />
+          <Button title="Clear Queue" onPress={handleClearQueue} color="red" />
+        </ThemedView>
+        
+        {offlineQueue.length > 0 && (
+          <ThemedView style={styles.queueContainer}>
+            <ThemedText type="defaultSemiBold">Queue Items ({offlineQueue.length}):</ThemedText>
+            {offlineQueue.map((item, index) => (
+              <ThemedView key={item.id} style={styles.queueItem}>
+                <ThemedText style={styles.queueItemText}>
+                  {index + 1}. {item.type} - {item.priority} - {item.status}
+                </ThemedText>
+                <ThemedText style={styles.queueItemText}>
+                  ID: {item.id}
+                </ThemedText>
+              </ThemedView>
+            ))}
+          </ThemedView>
+        )}
       </Collapsible>
 
       <Collapsible title="📊 Available Services">
@@ -135,7 +200,7 @@ export default function TabTwoScreen() {
           permissions and access control
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold"></ThemedText> User session
+          📁 <ThemedText type="defaultSemiBold">sessions:</ThemedText> User session
           tracking
         </ThemedText>
       </Collapsible>
@@ -251,6 +316,28 @@ const styles = StyleSheet.create({
   description: {
     marginBottom: 16,
     lineHeight: 20,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  queueContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 8,
+  },
+  queueItem: {
+    marginVertical: 4,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    borderRadius: 4,
+  },
+  queueItemText: {
+    fontSize: 12,
+    opacity: 0.8,
   },
   serviceItem: {
     marginVertical: 4,
