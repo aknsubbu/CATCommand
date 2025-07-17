@@ -33,7 +33,7 @@ export default function SplashScreen() {
         if (user) {
           router.replace("/(tabs)");
         } else {
-          router.replace("/+not-found");
+          router.replace("/auth/login");
         }
       }, 2000);
 
