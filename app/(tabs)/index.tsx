@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   FlatList,
@@ -15,6 +15,7 @@ import { spacing, typography } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
 import FirestoreService, {
+  Checkpoint,
   WorkOrder
 } from "@/services/FirestoreService";
 
@@ -63,16 +64,6 @@ interface Location {
   };
 }
 
-interface Checkpoint {
-  id: string;
-  title: string;
-  description?: string;
-  isCompleted: boolean;
-  completedAt?: any; // Timestamp
-  completedBy?: string;
-}
-
-
 
 
 
@@ -95,20 +86,23 @@ export default function HomeScreen() {
   const [selectedOperatorId, setSelectedOperatorId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    filterWorkOrders();
-  }, [activeFilter, workOrders]);
+  // useEffect(() => {
+  //   filterWorkOrders();
+  // }, [activeFilter, workOrders]);
 
-  const handleAsyncOperation = async (operation: string, asyncFn: () => Promise<string>) => {
+  const handleAsyncOperation = async (
+    operationName: string,
+    operation: () => Promise<any>
+  ) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const result = await asyncFn();
-      console.log(`${operation}: ${result}`);
-      return result;
+      const result = await operation();
+      // Optionally, you can still log or handle the result here
+      Alert.alert('Success', 'Fetched work orders')
     } catch (error) {
-      console.error(`${operation} failed:`, error);
-      Alert.alert("Error", `${operation} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -123,7 +117,8 @@ export default function HomeScreen() {
         selectedOperatorId
       );
       setWorkOrders(workOrders);
-      return `Found ${workOrders.length} work orders for operator ${selectedOperatorId}`;
+      console.log(workOrders);
+      return `Found ${workOrders} work orders for operator ${selectedOperatorId}`;
     });
 
   const handleSearchOperator = async () => {
@@ -143,7 +138,7 @@ export default function HomeScreen() {
   const clearSearch = () => {
     setOperatorId("");
     setSelectedOperatorId("");
-    setWorkOrders(mockWorkOrders);
+
   };
 
   const filterWorkOrders = () => {
@@ -161,7 +156,7 @@ export default function HomeScreen() {
         await getWorkOrdersByOperator();
       } else {
         // Load all orders when no operator is selected
-        setWorkOrders(mockWorkOrders);
+        alert('No operator selected')
       }
     } catch {
       // Error already handled
@@ -200,13 +195,13 @@ export default function HomeScreen() {
   };
 
   const getCompletedCheckpoints = (checkpoints: Checkpoint[]) => {
-    return checkpoints.filter(cp => cp.isCompleted).length;
+    return checkpoints.filter(cp => cp.completed).length;
   };
 
   const renderWorkOrderItem = ({ item }: { item: WorkOrder }) => {
-    const completedCheckpoints = getCompletedCheckpoints(item.checkpoints);
-    const totalCheckpoints = item.checkpoints.length;
-    const progress = totalCheckpoints > 0 ? (completedCheckpoints / totalCheckpoints) * 100 : 0;
+    // const completedCheckpoints = getCompletedCheckpoints(item.checkpoints);
+    // const totalCheckpoints = item.checkpoints.length;
+    // const progress = totalCheckpoints > 0 ? (completedCheckpoints / totalCheckpoints) * 100 : 0;
 
     return (
       <TouchableOpacity
@@ -214,6 +209,7 @@ export default function HomeScreen() {
         onPress={() => {
           // Navigate to work order details
           console.log("Navigate to work order:", item.id);
+          router.push({pathname:'/workOrders',params:{workOrderID:item.id}});
         }}
       >
         <View style={styles.cardHeader}>
@@ -239,15 +235,15 @@ export default function HomeScreen() {
         <View style={styles.locationSection}>
           <Ionicons name="location-outline" size={16} color={catColors.text.secondary} />
           <Text style={styles.locationText}>
-            {[item.location.building, item.location.room].filter(Boolean).join(" - ")}
+            {item.location && typeof item.location.latitude === "number" && typeof item.location.longitude === "number"
+              ? `${item.location.latitude}, ${item.location.longitude}`
+              : ""}
           </Text>
         </View>
 
-        <View style={styles.progressSection}>
+        {/* <View style={styles.progressSection}>
           <View style={styles.progressInfo}>
-            <Text style={styles.progressText}>
-              Progress: {completedCheckpoints}/{totalCheckpoints} checkpoints
-            </Text>
+            
             <Text style={styles.estimatedTime}>
               Est: {Math.floor(item.estimatedDuration / 60)}h {item.estimatedDuration % 60}m
             </Text>
@@ -255,13 +251,17 @@ export default function HomeScreen() {
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.cardFooter}>
           <View style={styles.scheduleInfo}>
             <Ionicons name="time-outline" size={16} color={catColors.text.secondary} />
             <Text style={styles.scheduleText}>
-              {formatDate(item.scheduledStart)}
+              {item.scheduledStart && typeof item.scheduledStart.toDate === "function"
+                ? formatDate(item.scheduledStart.toDate())
+                : item.scheduledStart instanceof Date
+                  ? formatDate(item.scheduledStart)
+                  : ""}
             </Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
@@ -374,6 +374,7 @@ export default function HomeScreen() {
           <Text style={styles.statValue}>{workOrders.filter(w => w.priority === 'urgent').length}</Text>
           <Text style={styles.statLabel}>Urgent</Text>
         </View>
+        
       </View>
 
       {/* Filter Chips */}
@@ -387,7 +388,7 @@ export default function HomeScreen() {
           <Ionicons name="folder-open-outline" size={48} color={catColors.text.secondary} />
           <Text style={styles.emptyStateTitle}>No Work Orders Found</Text>
           <Text style={styles.emptyStateText}>
-            No work orders found for operator "{selectedOperatorId}"
+            {`No work orders found for operator "${selectedOperatorId}"`}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={clearSearch}>
             <Text style={styles.retryButtonText}>Show All Orders</Text>
@@ -395,7 +396,7 @@ export default function HomeScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredOrders}
+          data={workOrders}
           renderItem={renderWorkOrderItem}
           keyExtractor={(item) => item.id}
           refreshControl={

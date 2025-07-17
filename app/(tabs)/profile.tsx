@@ -296,12 +296,12 @@ export default function ProfileScreen() {
           <Text style={styles.email}>{email}</Text>
           <View style={styles.membershipBadge}>
             <Ionicons name="star" size={16} color={colors.primary} />
-            <Text style={styles.membershipText}>{membershipLevel} Member</Text>
+            <Text style={styles.membershipText}>{membershipLevel} Tier Operator</Text>
           </View>
         </View>
       </View>
 
-      {/* Stats */}
+      {/* Stats
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>0</Text>
@@ -317,7 +317,7 @@ export default function ProfileScreen() {
           <Text style={styles.statValue}>0</Text>
           <Text style={styles.statLabel}>Wishlist</Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Settings */}
       <ScrollView style={styles.settingsContainer}>

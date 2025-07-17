@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, shadows, spacing, typography } from "../../constants/theme";
+import { colors, shadows, spacing, typography } from "../constants/theme";
 
 interface Task {
   id: string;
