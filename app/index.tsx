@@ -62,7 +62,7 @@ export default function SplashScreen() {
           },
         ]}
       >
-        ShopSmart AI
+        CAT Command{" "}
       </Animated.Text>
       <Animated.Text
         style={[
@@ -72,7 +72,7 @@ export default function SplashScreen() {
           },
         ]}
       >
-        Your Voice Shopping Assistant
+        Your Daily Operations Assistant
       </Animated.Text>
     </View>
   );

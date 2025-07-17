@@ -30,7 +30,13 @@ export default function SignUpScreen() {
   const router = useRouter();
 
   const validateForm = () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+    if (
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !confirmPassword.trim()
+    ) {
       Alert.alert("Error", "Please fill in all fields");
       return false;
     }
@@ -59,7 +65,12 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      await authService.signUp(email.trim(), password, firstName.trim(), lastName.trim());
+      await authService.signUp(
+        email.trim(),
+        password,
+        firstName.trim(),
+        lastName.trim()
+      );
       Alert.alert(
         "Success",
         "Account created successfully! Please check your email for verification.",
@@ -101,7 +112,7 @@ export default function SignUpScreen() {
               <Ionicons name="storefront" size={60} color={colors.primary} />
               <Text style={styles.title}>Create Account</Text>
               <Text style={styles.subtitle}>
-                Join ShopSmart AI and start your smart shopping journey
+                Join CAT Command and start your smart operations journey
               </Text>
             </View>
 
@@ -227,7 +238,9 @@ export default function SignUpScreen() {
                     style={styles.eyeIcon}
                   >
                     <Ionicons
-                      name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
+                      name={
+                        showConfirmPassword ? "eye-outline" : "eye-off-outline"
+                      }
                       size={20}
                       color={colors.text.secondary}
                     />
@@ -252,8 +265,14 @@ export default function SignUpScreen() {
               </View>
 
               <TouchableOpacity style={styles.googleButton}>
-                <Ionicons name="logo-google" size={20} color={colors.text.primary} />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Ionicons
+                  name="logo-google"
+                  size={20}
+                  color={colors.text.primary}
+                />
+                <Text style={styles.googleButtonText}>
+                  Continue with Google
+                </Text>
               </TouchableOpacity>
 
               <View style={styles.signInContainer}>

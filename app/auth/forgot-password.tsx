@@ -66,12 +66,16 @@ export default function ForgotPasswordScreen() {
           </View>
           <Text style={styles.successTitle}>Check Your Email</Text>
           <Text style={styles.successMessage}>
-            We've sent a password reset link to {email}
+            We&apos;ve sent a password reset link to {email}
           </Text>
           <Text style={styles.successSubMessage}>
-            Please check your email and follow the instructions to reset your password.
+            Please check your email and follow the instructions to reset your
+            password.
           </Text>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBackToLogin}
+          >
             <Text style={styles.backButtonText}>Back to Sign In</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -100,8 +104,15 @@ export default function ForgotPasswordScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Back Button */}
-            <TouchableOpacity style={styles.backIconButton} onPress={handleBackToLogin}>
-              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <TouchableOpacity
+              style={styles.backIconButton}
+              onPress={handleBackToLogin}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={colors.text.primary}
+              />
             </TouchableOpacity>
 
             {/* Header */}
@@ -109,7 +120,8 @@ export default function ForgotPasswordScreen() {
               <Ionicons name="lock-closed" size={60} color={colors.primary} />
               <Text style={styles.title}>Forgot Password?</Text>
               <Text style={styles.subtitle}>
-                Don't worry! It happens. Please enter the email address associated with your account.
+                Don&apos;t worry! It happens. Please enter the email address
+                associated with your account.
               </Text>
             </View>
 
@@ -148,9 +160,7 @@ export default function ForgotPasswordScreen() {
               </TouchableOpacity>
 
               <View style={styles.helpContainer}>
-                <Text style={styles.helpText}>
-                  Remember your password?{" "}
-                </Text>
+                <Text style={styles.helpText}>Remember your password? </Text>
                 <TouchableOpacity onPress={handleBackToLogin}>
                   <Text style={styles.helpLink}>Sign In</Text>
                 </TouchableOpacity>
