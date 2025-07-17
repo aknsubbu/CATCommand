@@ -1,53 +1,391 @@
-import { Image } from "expo-image";
-import { Button, Platform, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 import { Collapsible } from "@/components/Collapsible";
-
 import { ExternalLink } from "@/components/ExternalLink";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { OfflineQueueItem, OfflineQueueService } from "@/services/asyncService";
-import { useState } from "react";
 
-export default function TabTwoScreen() {
-  const [offlineQueue, setOfflineQueue] = useState<OfflineQueueItem[]>([]);
+// Import the TypeScript Firestore service and types
+import FirestoreService, {
+  CreateAlertData,
+  CreateInspectionData,
+  CreateMachineData,
+  CreateOperatorData,
+  CreateScheduledTaskData,
+  CreateWorkOrderData,
+  Machine,
+  Operator
+} from "@/services/FirestoreService";
 
-  const handleTestAsyncStorage = async () => {
+import type { Alert as FirestoreAlert } from "@/services/FirestoreService";
+
+interface TestButtonProps {
+  title: string;
+  onPress: () => void;
+  color?: string;
+}
+
+export default function TabTwoScreen(): React.ReactElement {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [testResults, setTestResults] = useState<string>("");
+
+  // Sample data creation functions with proper typing
+  const createSampleOperator = async (): Promise<void> => {
+    setLoading(true);
     try {
-      console.log("Testing AsyncStorage...");
-      const sampleItem = {
-        operatorId: "op-123",
-        type: "inspection" as const,
-        priority: "high" as const,
-        data: { machineId: "machine-456", inspectionNotes: "All systems nominal." },
-        timestamp: new Date(),
+      const operatorData: CreateOperatorData = {
+        name: "John Doe",
+        employeeId: "EMP001",
+        certifications: ["excavator", "safety"],
+        trainingLevel: "intermediate",
+        phoneNumber: "+1234567890",
+        email: "john.doe@caterpillar.com",
+        shift: "morning",
+        status: "active",
+        currentMachineId: null,
+        lastLogin: FirestoreService.dateToTimestamp(new Date()),
+        totalHours: 2400,
+        safetyScore: 95,
+        efficiencyRating: 87
       };
-      
-      const addedItem = await OfflineQueueService.addItem(sampleItem);
-      console.log("Sample item added to the queue:", addedItem);
-      
-      // Get all items and update state
-      const allItems = await OfflineQueueService.getAllItems();
-      setOfflineQueue(allItems);
-      
-      await OfflineQueueService.logAllItems();
-      console.log("AsyncStorage test completed successfully!");
+
+      const operatorId = await FirestoreService.createOperator(operatorData);
+      setTestResults(`✅ Operator created with ID: ${operatorId}`);
+      Alert.alert("Success", `Operator created with ID: ${operatorId}`);
     } catch (error) {
-      console.error("Error during AsyncStorage test:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating operator: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create operator: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleClearQueue = async () => {
+  const createSampleMachine = async (): Promise<void> => {
+    setLoading(true);
     try {
-      await OfflineQueueService.clearQueue();
-      setOfflineQueue([]);
-      console.log("Queue cleared successfully!");
+      const machineData: CreateMachineData = {
+        model: "CAT 336",
+        serialNumber: "SN123456789",
+        type: "excavator",
+        currentOperatorId: null,
+        status: "active",
+        location: {
+          lat: 37.7749,
+          lng: -122.4194,
+          timestamp: FirestoreService.dateToTimestamp(new Date())
+        },
+        engineHours: 1524.5,
+        fuelLevel: 75,
+        lastMaintenance: FirestoreService.dateToTimestamp(new Date(Date.now() - 86400000)), // Yesterday
+        nextMaintenanceDue: FirestoreService.dateToTimestamp(new Date(Date.now() + 604800000)), // Next week
+        specifications: {
+          maxLoad: 2000,
+          fuelCapacity: 400,
+          operatingWeight: 36000
+        },
+        sensors: {
+          temperature: 85,
+          pressure: 45,
+          vibration: 2.1
+        }
+      };
+
+      const machineId = await FirestoreService.createMachine(machineData);
+      setTestResults(`✅ Machine created with ID: ${machineId}`);
+      Alert.alert("Success", `Machine created with ID: ${machineId}`);
     } catch (error) {
-      console.error("Error clearing queue:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating machine: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create machine: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const createSampleWorkOrder = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const workOrderData: CreateWorkOrderData = {
+        title: "Site Excavation - Phase 1",
+        description: "Excavate foundation area for new building construction",
+        priority: "high",
+        status: "pending",
+        assignedOperatorId: "temp_operator",
+        assignedMachineId: "temp_machine",
+        estimatedDuration: 480, // 8 hours
+        actualDuration: null,
+        location: {
+          lat: 37.7849,
+          lng: -122.4094,
+          address: "Construction Site A, San Francisco, CA",
+          geofenceRadius: 50
+        },
+        checkpoints: [
+          {
+            id: "checkpoint_1",
+            name: "Start Position",
+            location: { lat: 37.7849, lng: -122.4094 },
+            completed: false,
+            completedAt: null,
+            gpsTagged: false
+          },
+          {
+            id: "checkpoint_2",
+            name: "Excavation Area",
+            location: { lat: 37.7850, lng: -122.4095 },
+            completed: false,
+            completedAt: null,
+            gpsTagged: false
+          }
+        ],
+        scheduledStart: FirestoreService.dateToTimestamp(new Date(Date.now() + 86400000)), // Tomorrow
+        scheduledEnd: FirestoreService.dateToTimestamp(new Date(Date.now() + 115200000)), // Tomorrow + 8 hours
+        actualStart: null,
+        actualEnd: null,
+        createdBy: "supervisor_001"
+      };
+
+      const workOrderId = await FirestoreService.createWorkOrder(workOrderData);
+      setTestResults(`✅ Work Order created with ID: ${workOrderId}`);
+      Alert.alert("Success", `Work Order created with ID: ${workOrderId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating work order: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create work order: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createSampleAlert = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const alertData: CreateAlertData = {
+        type: "safety",
+        severity: "warning",
+        title: "High Engine Temperature",
+        message: "Engine temperature is above normal operating range",
+        machineId: "temp_machine",
+        operatorId: "temp_operator",
+        workOrderId: null,
+        status: "active",
+        location: {
+          lat: 37.7749,
+          lng: -122.4194
+        },
+        triggerData: {
+          metric: "engine_temperature",
+          value: 95,
+          threshold: 90,
+          unit: "celsius"
+        },
+        audioPlayed: false,
+        acknowledgedBy: null,
+        acknowledgedAt: null,
+        resolvedBy: null,
+        resolvedAt: null
+      };
+
+      const alertId = await FirestoreService.createAlert(alertData);
+      setTestResults(`✅ Alert created with ID: ${alertId}`);
+      Alert.alert("Success", `Alert created with ID: ${alertId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating alert: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create alert: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createSampleInspection = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const inspectionData: CreateInspectionData = {
+        machineId: "temp_machine",
+        operatorId: "temp_operator",
+        type: "daily",
+        status: "pending",
+        checklist: {
+          "safety_001": {
+            name: "Seatbelt Check",
+            category: "safety",
+            required: true,
+            status: "pending",
+            notes: null,
+            photo: null,
+            timestamp: null
+          },
+          "mechanical_001": {
+            name: "Hydraulic Fluid Level",
+            category: "mechanical",
+            required: true,
+            status: "pending",
+            notes: null,
+            photo: null,
+            timestamp: null
+          },
+          "fluid_001": {
+            name: "Engine Oil Level",
+            category: "fluid",
+            required: true,
+            status: "pending",
+            notes: null,
+            photo: null,
+            timestamp: null
+          }
+        },
+        overallResult: "pass",
+        startTime: FirestoreService.dateToTimestamp(new Date()),
+        endTime: null,
+        notes: "",
+        photos: [],
+        signature: null
+      };
+
+      const inspectionId = await FirestoreService.createInspection(inspectionData);
+      setTestResults(`✅ Inspection created with ID: ${inspectionId}`);
+      Alert.alert("Success", `Inspection created with ID: ${inspectionId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating inspection: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create inspection: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createSampleScheduledTask = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const taskData: CreateScheduledTaskData = {
+        operatorId: "temp_operator",
+        machineId: "temp_machine",
+        workOrderId: null,
+        title: "Morning Equipment Check",
+        description: "Complete daily pre-operation inspection",
+        type: "inspection",
+        priority: "high",
+        status: "scheduled",
+        estimatedDuration: 30,
+        actualDuration: null,
+        scheduledDate: FirestoreService.dateToTimestamp(new Date()),
+        startTime: null,
+        endTime: null,
+        location: {
+          lat: 37.7749,
+          lng: -122.4194,
+          address: "Equipment Yard A"
+        },
+        requirements: {
+          seatbeltCheck: true,
+          preInspection: true,
+          specialCertification: null
+        }
+      };
+
+      const taskId = await FirestoreService.createScheduledTask(taskData);
+      setTestResults(`✅ Scheduled Task created with ID: ${taskId}`);
+      Alert.alert("Success", `Scheduled Task created with ID: ${taskId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error creating scheduled task: ${errorMessage}`);
+      Alert.alert("Error", `Failed to create scheduled task: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testReadOperations = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      let results = "📊 READ OPERATIONS TEST RESULTS:\n\n";
+      
+      // Test getting all operators
+      const operators: Operator[] = await FirestoreService.getAll<Operator>('operators', { limitCount: 5 });
+      results += `✅ Found ${operators.length} operators\n`;
+      
+      // Test getting all machines
+      const machines: Machine[] = await FirestoreService.getAll<Machine>('machines', { limitCount: 5 });
+      results += `✅ Found ${machines.length} machines\n`;
+      
+      // Test getting active alerts
+      const alerts: Alert[] = await FirestoreService.getAll<Alert>('alerts', { limitCount: 5 });
+      results += `✅ Found ${alerts.length} Alerts\n`;
+
+      // const alerts: FirestoreAlert[] = await FirestoreService.getActiveAlerts();
+      // results += `✅ Found ${alerts.length} active alerts\n`;
+      
+      setTestResults(results);
+      Alert.alert("Read Operations Complete", results);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error in read operations: ${errorMessage}`);
+      Alert.alert("Error", `Failed read operations: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testUpdateOperations = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      let results = "✏️ UPDATE OPERATIONS TEST RESULTS:\n\n";
+      
+      // Get first operator to test update
+      const operators: Operator[] = await FirestoreService.getAll<Operator>('operators', { limitCount: 1 });
+      if (operators.length > 0) {
+        const operatorId = operators[0].id;
+        await FirestoreService.updateOperatorStatus(operatorId, 'on_break');
+        results += `✅ Updated operator ${operatorId} status to 'on_break'\n`;
+      }
+      
+      // Get first machine to test update
+      const machines: Machine[] = await FirestoreService.getAll<Machine>('machines', { limitCount: 1 });
+      if (machines.length > 0) {
+        const machineId = machines[0].id;
+        await FirestoreService.updateMachineFuelLevel(machineId, 85);
+        results += `✅ Updated machine ${machineId} fuel level to 85%\n`;
+      }
+      
+      // Get first alert to test acknowledgment
+      const alerts: FirestoreAlert[] = await FirestoreService.getActiveAlerts();
+      if (alerts.length > 0) {
+        const alertId = alerts[0].id;
+        await FirestoreService.acknowledgeAlert(alertId, 'supervisor_001');
+        results += `✅ Acknowledged alert ${alertId}\n`;
+      }
+      
+      setTestResults(results);
+      Alert.alert("Update Operations Complete", results);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setTestResults(`❌ Error in update operations: ${errorMessage}`);
+      Alert.alert("Error", `Failed update operations: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearTestResults = (): void => {
+    setTestResults("");
+  };
+
+  const TestButton: React.FC<TestButtonProps> = ({ title, onPress, color = "#007AFF" }) => (
+    <TouchableOpacity
+      style={[styles.testButton, { backgroundColor: color }]}
+      onPress={onPress}
+      disabled={loading}
+    >
+      <ThemedText style={styles.buttonText}>
+        {loading ? "Loading..." : title}
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   return (
     <ParallaxScrollView
@@ -62,14 +400,64 @@ export default function TabTwoScreen() {
       }
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore & Test</ThemedText>
+        <ThemedText type="title">CAT Command - Test Suite</ThemedText>
       </ThemedView>
 
-      <Collapsible title="🚀 Push Sample Data">
+      <Collapsible title="🚀 Create Sample Data">
         <ThemedText style={styles.description}>
-          Click the button below to push comprehensive sample data to all
-          Firestore collections. This will create users, machines, alerts,
-          maintenance tasks, AI interactions, and more.
+          Click the buttons below to create sample data in Firestore collections.
+          This will test the CREATE operations of your CAT Command services.
+        </ThemedText>
+        
+        <ThemedView style={styles.buttonContainer}>
+          <TestButton title="Create Operator" onPress={createSampleOperator} color="#4CAF50" />
+          <TestButton title="Create Machine" onPress={createSampleMachine} color="#2196F3" />
+          <TestButton title="Create Work Order" onPress={createSampleWorkOrder} color="#FF9800" />
+          <TestButton title="Create Alert" onPress={createSampleAlert} color="#F44336" />
+          <TestButton title="Create Inspection" onPress={createSampleInspection} color="#9C27B0" />
+          <TestButton title="Create Scheduled Task" onPress={createSampleScheduledTask} color="#607D8B" />
+        </ThemedView>
+      </Collapsible>
+
+      <Collapsible title="📊 Test CRUD Operations">
+        <ThemedText style={styles.description}>
+          Test various READ and UPDATE operations on your Firestore data.
+        </ThemedText>
+        
+        <ThemedView style={styles.buttonContainer}>
+          <TestButton title="Test Read Operations" onPress={testReadOperations} color="#00BCD4" />
+          <TestButton title="Test Update Operations" onPress={testUpdateOperations} color="#8BC34A" />
+          <TestButton title="Clear Results" onPress={clearTestResults} color="#795548" />
+        </ThemedView>
+      </Collapsible>
+
+      {testResults !== "" && (
+        <Collapsible title="📋 Test Results">
+          <ScrollView style={styles.resultsContainer}>
+            <ThemedText style={styles.resultsText}>{testResults}</ThemedText>
+          </ScrollView>
+        </Collapsible>
+      )}
+
+      <Collapsible title="🔧 TypeScript Features">
+        <ThemedText style={styles.description}>
+          This implementation includes full TypeScript support:
+        </ThemedText>
+        <ThemedText style={styles.featureItem}>
+          ✅ <ThemedText type="defaultSemiBold">Strongly Typed:</ThemedText>{" "}
+          All data models have proper TypeScript interfaces
+        </ThemedText>
+        <ThemedText style={styles.featureItem}>
+          📖 <ThemedText type="defaultSemiBold">Type Safety:</ThemedText>{" "}
+          Compile-time error checking for all operations
+        </ThemedText>
+        <ThemedText style={styles.featureItem}>
+          ✏️ <ThemedText type="defaultSemiBold">IntelliSense:</ThemedText>{" "}
+          Full IDE autocompletion and error detection
+        </ThemedText>
+        <ThemedText style={styles.featureItem}>
+          🎯 <ThemedText type="defaultSemiBold">Generic Methods:</ThemedText>{" "}
+          Reusable CRUD operations with type inference
         </ThemedText>
       </Collapsible>
 
@@ -101,107 +489,57 @@ export default function TabTwoScreen() {
 
       <Collapsible title="📊 Available Services">
         <ThemedText>
-          The following services are available for testing:
+          The following TypeScript services are available:
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">User Service:</ThemedText> User
-          management, roles, permissions, sessions
+          • <ThemedText type="defaultSemiBold">Operator Service:</ThemedText> Typed
+          user management with status tracking
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
           • <ThemedText type="defaultSemiBold">Machine Service:</ThemedText>{" "}
-          Equipment tracking, status, specifications
+          Equipment tracking with sensor data types
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">Alert Service:</ThemedText> Alert
-          creation, management, escalation
+          • <ThemedText type="defaultSemiBold">Work Order Service:</ThemedText>{" "}
+          Task management with checkpoint typing
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">Maintenance Service:</ThemedText>{" "}
-          Task scheduling, tracking, completion
+          • <ThemedText type="defaultSemiBold">Alert Service:</ThemedText> Typed
+          safety alerts with severity levels
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          •{" "}
-          <ThemedText type="defaultSemiBold">
-            AI Interaction Service:
-          </ThemedText>{" "}
-          Conversation management, feedback
+          • <ThemedText type="defaultSemiBold">Inspection Service:</ThemedText>{" "}
+          Strongly typed checklist management
         </ThemedText>
         <ThemedText style={styles.serviceItem}>
-          • <ThemedText type="defaultSemiBold">Session Service:</ThemedText>{" "}
-          User session tracking, device info
-        </ThemedText>
-        <ThemedText style={styles.serviceItem}>
-          •{" "}
-          <ThemedText type="defaultSemiBold">
-            Role & Permission Service:
-          </ThemedText>{" "}
-          Access control, permissions
+          • <ThemedText type="defaultSemiBold">Offline Queue Service:</ThemedText>{" "}
+          Typed offline synchronization
         </ThemedText>
       </Collapsible>
 
-      <Collapsible title="🔧 Test Features">
-        <ThemedText>Each test suite includes:</ThemedText>
-        <ThemedText style={styles.featureItem}>
-          ✅ <ThemedText type="defaultSemiBold">Create Operations:</ThemedText>{" "}
-          Test data creation with validation
-        </ThemedText>
-        <ThemedText style={styles.featureItem}>
-          📖 <ThemedText type="defaultSemiBold">Read Operations:</ThemedText>{" "}
-          Data retrieval with filtering and pagination
-        </ThemedText>
-        <ThemedText style={styles.featureItem}>
-          ✏️ <ThemedText type="defaultSemiBold">Update Operations:</ThemedText>{" "}
-          Data modification and status changes
-        </ThemedText>
-        <ThemedText style={styles.featureItem}>
-          📈 <ThemedText type="defaultSemiBold">Analytics:</ThemedText>{" "}
-          Statistics and metrics calculation
-        </ThemedText>
-        <ThemedText style={styles.featureItem}>
-          ⚡ <ThemedText type="defaultSemiBold">Performance:</ThemedText>{" "}
-          Execution time tracking for each operation
-        </ThemedText>
-        <ThemedText style={styles.featureItem}>
-          🎯 <ThemedText type="defaultSemiBold">Error Handling:</ThemedText>{" "}
-          Comprehensive error catching and reporting
-        </ThemedText>
-      </Collapsible>
-
-      <Collapsible title="🗄️ Database Schema">
+      <Collapsible title="🗄️ TypeScript Schema">
         <ThemedText>
-          The Firestore database includes the following collections:
+          All Firestore collections have TypeScript interfaces:
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">users:</ThemedText> User
-          profiles, roles, and settings
+          📁 <ThemedText type="defaultSemiBold">Operator:</ThemedText> Interface with
+          status unions and certification arrays
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">machines:</ThemedText> Equipment
-          data, specifications, status
+          📁 <ThemedText type="defaultSemiBold">Machine:</ThemedText> Typed equipment
+          with sensor data and location interfaces
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">alerts:</ThemedText> System
-          alerts, notifications, escalations
+          📁 <ThemedText type="defaultSemiBold">WorkOrder:</ThemedText> Checkpoint
+          arrays with GPS location typing
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">maintenanceTasks:</ThemedText>{" "}
-          Scheduled and completed maintenance
+          📁 <ThemedText type="defaultSemiBold">Alert:</ThemedText> Typed severity
+          levels and trigger data interfaces
         </ThemedText>
         <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">aiInteractions:</ThemedText> AI
-          conversation history and feedback
-        </ThemedText>
-        <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">roles:</ThemedText> Role
-          definitions and permissions
-        </ThemedText>
-        <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">permissions:</ThemedText> System
-          permissions and access control
-        </ThemedText>
-        <ThemedText style={styles.schemaItem}>
-          📁 <ThemedText type="defaultSemiBold">sessions:</ThemedText> User session
-          tracking
+          📁 <ThemedText type="defaultSemiBold">Inspection:</ThemedText> Checklist
+          with item status enums
         </ThemedText>
       </Collapsible>
 
@@ -215,88 +553,9 @@ export default function TabTwoScreen() {
           and{" "}
           <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
         </ThemedText>
-        <ThemedText>
-          The layout file in{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{" "}
-          sets up the tab navigator.
-        </ThemedText>
         <ExternalLink href="https://docs.expo.dev/router/introduction">
           <ThemedText type="link">Learn more</ThemedText>
         </ExternalLink>
-      </Collapsible>
-
-      <Collapsible title="🌐 Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the
-          web version, press <ThemedText type="defaultSemiBold">w</ThemedText>{" "}
-          in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-
-      <Collapsible title="🖼️ Images">
-        <ThemedText>
-          For static images, you can use the{" "}
-          <ThemedText type="defaultSemiBold">@2x</ThemedText> and{" "}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to
-          provide files for different screen densities
-        </ThemedText>
-        <Image
-          source={require("@/assets/images/react-logo.png")}
-          style={{ alignSelf: "center" }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-
-      <Collapsible title="🔤 Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText>{" "}
-          to see how to load{" "}
-          <ThemedText style={{ fontFamily: "SpaceMono" }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-
-      <Collapsible title="🌙 Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{" "}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook
-          lets you inspect what the user&apos;s current color scheme is, and so
-          you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-
-      <Collapsible title="✨ Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{" "}
-          <ThemedText type="defaultSemiBold">
-            components/HelloWave.tsx
-          </ThemedText>{" "}
-          component uses the powerful{" "}
-          <ThemedText type="defaultSemiBold">
-            react-native-reanimated
-          </ThemedText>{" "}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The{" "}
-              <ThemedText type="defaultSemiBold">
-                components/ParallaxScrollView.tsx
-              </ThemedText>{" "}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
       </Collapsible>
     </ParallaxScrollView>
   );
@@ -353,5 +612,35 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginLeft: 8,
     lineHeight: 20,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 16,
+  },
+  testButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  resultsContainer: {
+    backgroundColor: "#f5f5f5",
+    padding: 12,
+    borderRadius: 8,
+    maxHeight: 200,
+  },
+  resultsText: {
+    fontFamily: "monospace",
+    fontSize: 12,
+    lineHeight: 16,
   },
 });
