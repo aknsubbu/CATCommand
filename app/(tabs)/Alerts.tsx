@@ -1,13 +1,14 @@
-import { Button, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
-import { useState, useCallback } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router';
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { startMonitoring, Alert } from "@/services/alertService";
+import { Alert, startMonitoring } from "@/services/alertService";
+import { speak } from "@/services/speechService"; // Import the speech service
 import { TrainingSuggestion } from "@/services/trainingSuggestionService";
 
 export default function AlertsScreen() {
@@ -18,6 +19,46 @@ export default function AlertsScreen() {
 
   const handleAlert = useCallback((alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => {
     setAlerts(prevAlerts => [alert, ...prevAlerts]);
+    
+    // Speak the alert based on its type
+    if ('type' in alert && alert.type === 'training_suggestion') {
+      // This is a TrainingSuggestion
+      const speechText = `Training suggestion: ${alert.title}. ${alert.trainingModuleTitle} training recommended.`;
+      speak(speechText);
+    } else if ('title' in alert) {
+      // This is an Alert object with title and priority
+      let speechText = '';
+      
+      // Customize speech based on priority and type
+      switch (alert.priority) {
+        case 'critical':
+          speechText = `Critical alert! ${alert.title}. ${alert.message}`;
+          break;
+        case 'high':
+          speechText = `High priority alert. ${alert.title}. ${alert.message}`;
+          break;
+        case 'medium':
+          speechText = `Medium priority alert. ${alert.title}`;
+          break;
+        case 'low':
+          speechText = `Info: ${alert.title}`;
+          break;
+        default:
+          speechText = `Alert: ${alert.title}. ${alert.message}`;
+      }
+      
+      speak(speechText);
+    } else {
+      // This is a status message (like "No problem for machine" or "Finished processing")
+      if (alert.message.includes('No problem')) {
+        // Don't speak "no problem" messages to avoid spam
+        return;
+      } else if (alert.message.includes('Finished processing')) {
+        speak("Alert monitoring has completed processing all data.");
+      } else {
+        speak(alert.message);
+      }
+    }
   }, []);
 
   const pickDocument = async () => {
@@ -31,13 +72,25 @@ export default function AlertsScreen() {
         setAlerts([]);
         setMonitoring(true);
         setLoading(true);
+        
+        // Announce monitoring has started
+        speak("Alert monitoring has started. Processing data file.");
+        
         const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri);
         startMonitoring(fileContent, handleAlert);
         setLoading(false);
       }
     } catch (error) {
       console.error("Error picking document:", error);
+      speak("Error occurred while selecting or processing the file.");
+      setLoading(false);
+      setMonitoring(false);
     }
+  };
+
+  const stopMonitoring = () => {
+    setMonitoring(false);
+    speak("Alert monitoring has been stopped.");
   };
 
   return (
@@ -51,9 +104,20 @@ export default function AlertsScreen() {
 
       <ThemedView style={styles.stepContainer}>
         <ThemedText>
-          Select a CSV file to begin monitoring for alerts.
+          Select a CSV file to begin monitoring for alerts. Critical alerts and training suggestions will be announced audibly.
         </ThemedText>
-        <Button title="Select CSV File" onPress={pickDocument} disabled={monitoring} />
+        <Button 
+          title={monitoring ? "Monitoring Active..." : "Select CSV File"} 
+          onPress={pickDocument} 
+          disabled={monitoring} 
+        />
+        {monitoring && (
+          <Button 
+            title="Stop Monitoring" 
+            onPress={stopMonitoring} 
+            color="red"
+          />
+        )}
         {loading && <ActivityIndicator size="large" color="#0000ff" />}
       </ThemedView>
 
@@ -66,6 +130,7 @@ export default function AlertsScreen() {
                 onPress={() => {
                   console.log("Navigating to TrainingModule with ID:", alert.trainingModuleId);
                   router.push({ pathname: "/TrainingHub/TrainingModule", params: { trainingModuleId: alert.trainingModuleId } });
+                  speak(`Opening training module: ${alert.trainingModuleTitle}`);
                 }}
               >
                 <ThemedText type="defaultSemiBold">{alert.title}</ThemedText>
@@ -73,13 +138,30 @@ export default function AlertsScreen() {
                 <ThemedText style={styles.linkText}>View Training: {alert.trainingModuleTitle}</ThemedText>
               </TouchableOpacity>
             ) : 'title' in alert ? (
-              <ThemedText style={{ color: alert.priority === 'critical' ? 'red' : 'orange' }}>
-                <ThemedText type="defaultSemiBold">{alert.title}</ThemedText>
-                {alert.message}
-              </ThemedText>
+              <ThemedView>
+                <ThemedText style={{ 
+                  color: alert.priority === 'critical' ? 'red' : 
+                         alert.priority === 'high' ? 'orange' : 
+                         alert.priority === 'medium' ? 'yellow' : 'blue' 
+                }}>
+                  <ThemedText type="defaultSemiBold">
+                    [{alert.priority?.toUpperCase()}] {alert.title}
+                  </ThemedText>
+                </ThemedText>
+                <ThemedText style={{ marginTop: 4 }}>
+                  {alert.message}
+                </ThemedText>
+                <ThemedText style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                  {alert.machineId && `Machine: ${alert.machineId}`}
+                  {alert.operatorId && ` | Operator: ${alert.operatorId}`}
+                  {alert.createdAt && ` | ${alert.createdAt.toLocaleTimeString()}`}
+                </ThemedText>
+              </ThemedView>
             ) : (
               <ThemedText style={{ color: 'green' }}>
-                {alert.message} - Machine: {alert.machineId} at {alert.timestamp}
+                {alert.message} 
+                {alert.machineId && ` - Machine: ${alert.machineId}`} 
+                {` at ${alert.timestamp}`}
               </ThemedText>
             )}
           </ThemedView>
