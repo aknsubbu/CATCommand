@@ -35,6 +35,13 @@ export interface Alert extends BaseDocument {
   location?: Location;
 }
 
+export interface StatusMessage {
+  id: string;
+  message: string;
+  machineId?: string;
+  timestamp: string;
+}
+
 export interface CsvRow {
   Timestamp: string;
   Machine_ID: string;
@@ -181,7 +188,7 @@ const checkHighAmbientTempAlert = (row: CsvRow): Alert | null => {
 
 // --- Core Logic ---
 
-export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => void): () => void => {
+export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | StatusMessage | TrainingSuggestion) => void): () => void => {
   let timeoutId: NodeJS.Timeout;
   let currentIndex = 0;
   let isMonitoringActive = true;
@@ -193,7 +200,12 @@ export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { m
 
   const processRow = async () => {
     if (!isMonitoringActive || currentIndex >= rows.length) {
-      onAlert({ message: "Finished processing all data.", machineId: '', timestamp: new Date().toISOString() });
+      onAlert({
+        id: generateUUID(),
+        message: "Finished processing all data.",
+        machineId: '',
+        timestamp: new Date().toISOString()
+      });
       return;
     }
 
@@ -224,7 +236,12 @@ export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { m
         }
       }
     } else {
-      onAlert({ message: 'No problem for machine', machineId: row.Machine_ID, timestamp: row.Timestamp });
+      onAlert({
+        id: generateUUID(),
+        message: 'No problem for machine',
+        machineId: row.Machine_ID,
+        timestamp: row.Timestamp
+      });
     }
 
     // Update machine state

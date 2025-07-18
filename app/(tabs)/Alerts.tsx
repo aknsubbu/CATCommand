@@ -7,19 +7,24 @@ import { ActivityIndicator, Button, ScrollView, StyleSheet, TouchableOpacity } f
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Alert, startMonitoring } from "@/services/alertService";
+import { Alert, startMonitoring, StatusMessage } from "@/services/alertService";
 import { speak } from "@/services/speechService"; // Import the speech service
 import { TrainingSuggestion } from "@/services/trainingSuggestionService";
+import { generateUUID } from "@/services/asyncService"; // Import generateUUID
+
+type DisplayableAlert = (Alert | StatusMessage | TrainingSuggestion) & { displayKey: string };
 
 export default function AlertsScreen() {
-  const [alerts, setAlerts] = useState<(Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion)[]>([]);
+  const [alerts, setAlerts] = useState<DisplayableAlert[]>([]);
   const [monitoring, setMonitoring] = useState(false);
   const [loading, setLoading] = useState(false);
   const [stopMonitoringFunction, setStopMonitoringFunction] = useState<(() => void) | null>(null);
   const router = useRouter();
 
-  const handleAlert = useCallback((alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => {
-    setAlerts(prevAlerts => [alert, ...prevAlerts]);
+  const handleAlert = useCallback((alert: Alert | StatusMessage | TrainingSuggestion) => {
+    // Assign a unique display key to each alert for React's key prop
+    const alertWithDisplayKey = { ...alert, displayKey: generateUUID() };
+    setAlerts(prevAlerts => [alertWithDisplayKey, ...prevAlerts]);
     
     // Speak the alert based on its type
     if ('type' in alert && alert.type === 'training_suggestion') {
@@ -63,6 +68,7 @@ export default function AlertsScreen() {
   }, []);
 
   const pickDocument = async () => {
+    let fileContent: string | null = null; // Declare outside the if block
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -77,6 +83,7 @@ export default function AlertsScreen() {
         // Announce monitoring has started
         speak("Alert monitoring has started. Processing data file.");
         
+        fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri); // Assign here
         const cleanup = startMonitoring(fileContent, handleAlert);
         setStopMonitoringFunction(() => cleanup);
         setLoading(false);
@@ -128,7 +135,10 @@ export default function AlertsScreen() {
 
       <ScrollView style={styles.logContainer}>
         {alerts.map((alert) => (
-          <ThemedView key={alert.id || Math.random().toString()} style={styles.logEntry}>
+          <ThemedView 
+            key={alert.displayKey}
+            style={styles.logEntry}
+          >
             {'type' in alert && alert.type === 'training_suggestion' ? (
               <TouchableOpacity 
                 style={styles.suggestionContainer}
