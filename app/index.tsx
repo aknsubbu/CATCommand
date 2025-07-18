@@ -1,7 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, Image, StyleSheet, View } from "react-native";
 import { colors, spacing, typography } from "../constants/theme";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -52,7 +51,11 @@ export default function SplashScreen() {
           },
         ]}
       >
-        <Ionicons name="mic" size={80} color={colors.primary} />
+         <Image
+    source={{ uri: "https://s7d2.scene7.com/is/image/Caterpillar/CM20220222-5c3c2-280a8?fmt=png-alpha" }}
+    style={styles.logoImage}
+    resizeMode="contain"
+  />
       </Animated.View>
       <Animated.Text
         style={[
@@ -97,5 +100,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.fontSize.lg,
     color: colors.text.secondary,
+  },
+   logoImage: {
+    width: 80,
+    height: 80,
   },
 });

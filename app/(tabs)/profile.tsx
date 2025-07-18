@@ -320,7 +320,19 @@ export default function ProfileScreen() {
       </View> */}
 
       {/* Settings */}
+
       <ScrollView style={styles.settingsContainer}>
+        {/* <VoiceNotesComponent
+  onNoteSaved={(note) => {
+    console.log('New note saved:', note);
+    // Handle note saving (e.g., save to database)
+  }}
+  onNoteDeleted={(noteId) => {
+    console.log('Note deleted:', noteId);
+    // Handle note deletion
+  }}
+  maxNotesDisplayed={20}
+/> */}
         {settingsSections.map((section) => (
           <View key={section.title} style={styles.settingsSection}>
             <Text style={styles.sectionTitle}>{section.title}</Text>

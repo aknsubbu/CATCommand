@@ -42,7 +42,15 @@
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "@jamsch/expo-speech-recognition",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to use the microphone for voice notes.",
+          "speechRecognitionPermission": "Allow $(PRODUCT_NAME) to use speech recognition for voice notes.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox", "com.google.android.tts"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

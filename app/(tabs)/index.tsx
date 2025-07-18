@@ -19,7 +19,6 @@ import FirestoreService, {
   WorkOrder
 } from "@/services/FirestoreService";
 
-
 // CAT Color Scheme
 const catColors = {
   primary: "#FFCD11", // CAT Yellow
@@ -64,9 +63,6 @@ interface Location {
   };
 }
 
-
-
-
 const filterOptions = [
   { key: "all", label: "All Orders", icon: "list-outline" },
   { key: "pending", label: "Pending", icon: "time-outline" },
@@ -86,10 +82,6 @@ export default function HomeScreen() {
   const [selectedOperatorId, setSelectedOperatorId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   filterWorkOrders();
-  // }, [activeFilter, workOrders]);
-
   const handleAsyncOperation = async (
     operationName: string,
     operation: () => Promise<any>
@@ -97,7 +89,6 @@ export default function HomeScreen() {
     setLoading(true);
     try {
       const result = await operation();
-      // Optionally, you can still log or handle the result here
       Alert.alert('Success', 'Fetched work orders')
     } catch (error) {
       const errorMessage =
@@ -107,8 +98,6 @@ export default function HomeScreen() {
       setLoading(false);
     }
   };
-
-  
 
   const getWorkOrdersByOperator = () =>
     handleAsyncOperation("Get Work Orders by Operator", async () => {
@@ -138,7 +127,6 @@ export default function HomeScreen() {
   const clearSearch = () => {
     setOperatorId("");
     setSelectedOperatorId("");
-
   };
 
   const filterWorkOrders = () => {
@@ -155,7 +143,6 @@ export default function HomeScreen() {
       if (selectedOperatorId) {
         await getWorkOrdersByOperator();
       } else {
-        // Load all orders when no operator is selected
         alert('No operator selected')
       }
     } catch {
@@ -199,15 +186,10 @@ export default function HomeScreen() {
   };
 
   const renderWorkOrderItem = ({ item }: { item: WorkOrder }) => {
-    // const completedCheckpoints = getCompletedCheckpoints(item.checkpoints);
-    // const totalCheckpoints = item.checkpoints.length;
-    // const progress = totalCheckpoints > 0 ? (completedCheckpoints / totalCheckpoints) * 100 : 0;
-
     return (
       <TouchableOpacity
         style={styles.workOrderCard}
         onPress={() => {
-          // Navigate to work order details
           console.log("Navigate to work order:", item.id);
           router.push({pathname:'/workOrders',params:{workOrderID:item.id}});
         }}
@@ -237,21 +219,9 @@ export default function HomeScreen() {
           <Text style={styles.locationText}>
             {item.location && typeof item.location.latitude === "number" && typeof item.location.longitude === "number"
               ? `${item.location.latitude}, ${item.location.longitude}`
-              : ""}
+              : "Location not specified"}
           </Text>
         </View>
-
-        {/* <View style={styles.progressSection}>
-          <View style={styles.progressInfo}>
-            
-            <Text style={styles.estimatedTime}>
-              Est: {Math.floor(item.estimatedDuration / 60)}h {item.estimatedDuration % 60}m
-            </Text>
-          </View>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
-        </View> */}
 
         <View style={styles.cardFooter}>
           <View style={styles.scheduleInfo}>
@@ -261,7 +231,7 @@ export default function HomeScreen() {
                 ? formatDate(item.scheduledStart.toDate())
                 : item.scheduledStart instanceof Date
                   ? formatDate(item.scheduledStart)
-                  : ""}
+                  : "No schedule"}
             </Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
@@ -272,7 +242,36 @@ export default function HomeScreen() {
     );
   };
 
-  
+  const renderEmptyState = () => {
+    if (workOrders.length === 0 && selectedOperatorId) {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="folder-open-outline" size={48} color={catColors.text.secondary} />
+          <Text style={styles.emptyStateTitle}>No Work Orders Found</Text>
+          <Text style={styles.emptyStateText}>
+            {`No work orders found for operator "${selectedOperatorId}"`}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={clearSearch}>
+            <Text style={styles.retryButtonText}>Show All Orders</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (workOrders.length === 0) {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="clipboard-outline" size={48} color={catColors.text.secondary} />
+          <Text style={styles.emptyStateTitle}>No Work Orders</Text>
+          <Text style={styles.emptyStateText}>
+            Search for an operator to view their work orders
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <View style={styles.container}>
@@ -330,7 +329,7 @@ export default function HomeScreen() {
               Showing orders for: <Text style={styles.operatorIdText}>{selectedOperatorId}</Text>
             </Text>
             <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <Text style={styles.clearButtonText}>Show All</Text>
+              <Text style={styles.clearButtonText}>Clear</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -352,24 +351,10 @@ export default function HomeScreen() {
           <Text style={styles.statValue}>{workOrders.filter(w => w.status === 'completed').length}</Text>
           <Text style={styles.statLabel}>Completed</Text>
         </View>
-        
       </View>
 
-     
-
       {/* Work Orders List */}
-      {workOrders.length === 0 && selectedOperatorId ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="folder-open-outline" size={48} color={catColors.text.secondary} />
-          <Text style={styles.emptyStateTitle}>No Work Orders Found</Text>
-          <Text style={styles.emptyStateText}>
-            {`No work orders found for operator "${selectedOperatorId}"`}
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={clearSearch}>
-            <Text style={styles.retryButtonText}>Show All Orders</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
+      <View style={styles.listWrapper}>
         <FlatList
           data={workOrders}
           renderItem={renderWorkOrderItem}
@@ -384,20 +369,15 @@ export default function HomeScreen() {
           }
           contentContainerStyle={[
             styles.listContainer,
-            filteredOrders.length === 0 && styles.emptyListContainer
+            workOrders.length === 0 && styles.emptyListContainer
           ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="list-outline" size={48} color={catColors.text.secondary} />
-              <Text style={styles.emptyStateTitle}>No Orders Match Filter</Text>
-              <Text style={styles.emptyStateText}>
-                Try selecting a different filter option
-              </Text>
-            </View>
-          }
+          showsVerticalScrollIndicator={true}
+          ListEmptyComponent={renderEmptyState}
+          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+          ListHeaderComponent={() => <View style={styles.listHeader} />}
+          ListFooterComponent={() => <View style={styles.listFooter} />}
         />
-      )}
+      </View>
     </View>
   );
 }
@@ -405,9 +385,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: catColors.background.light,
-    paddingBottom:spacing["5xl"],
-    
+    backgroundColor: catColors.background.gray,
   },
   header: {
     flexDirection: "row",
@@ -415,8 +393,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: spacing.base,
     paddingTop: spacing["2xl"],
+    backgroundColor: catColors.background.light,
     borderBottomWidth: 1,
     borderBottomColor: catColors.border,
+    // Add shadow for iOS
+    shadowColor: catColors.secondary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    // Add elevation for Android
+    elevation: 3,
   },
   greeting: {
     fontSize: typography.fontSize.sm,
@@ -432,68 +418,6 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     backgroundColor: catColors.background.gray,
     borderRadius: 8,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    padding: spacing.base,
-    backgroundColor: catColors.background.light,
-    borderBottomWidth: 1,
-    borderBottomColor: catColors.border,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: "600",
-    color: catColors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  statLabel: {
-    fontSize: typography.fontSize.sm,
-    color: catColors.text.secondary,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: catColors.border,
-  },
-  filtersContainer: {
-    flexDirection: "row",
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
-    backgroundColor: catColors.background.light,
-  },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: catColors.background.gray,
-    borderRadius: 16,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: catColors.primary,
-  },
-  activeFilterChip: {
-    backgroundColor: catColors.primary,
-  },
-  filterChipText: {
-    color: catColors.primary,
-    fontSize: typography.fontSize.xs,
-    fontWeight: "500",
-  },
-  activeFilterChipText: {
-    color: catColors.text.light,
-  },
-  listContainer: {
-    padding: spacing.base,
-    paddingTop:spacing["5xl"],
-    paddingBottom:spacing["5xl"],
-  },
-  emptyListContainer: {
-    flex: 1,
-    justifyContent: 'center',
   },
   searchSection: {
     padding: spacing.base,
@@ -531,6 +455,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 48,
+    minHeight: 48,
   },
   searchButtonDisabled: {
     backgroundColor: catColors.text.secondary,
@@ -554,6 +480,7 @@ const styles = StyleSheet.create({
   activeSearchText: {
     fontSize: typography.fontSize.sm,
     color: catColors.text.primary,
+    flex: 1,
   },
   operatorIdText: {
     fontWeight: '600',
@@ -562,17 +489,66 @@ const styles = StyleSheet.create({
   clearButton: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    backgroundColor: catColors.primary,
+    borderRadius: 6,
   },
   clearButtonText: {
     fontSize: typography.fontSize.sm,
-    color: catColors.primary,
+    color: catColors.text.light,
     fontWeight: '500',
+  },
+  statsContainer: {
+    flexDirection: "row",
+    padding: spacing.base,
+    backgroundColor: catColors.background.light,
+    borderBottomWidth: 1,
+    borderBottomColor: catColors.border,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: "600",
+    color: catColors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  statLabel: {
+    fontSize: typography.fontSize.sm,
+    color: catColors.text.secondary,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: catColors.border,
+  },
+  listWrapper: {
+    flex: 1,
+    backgroundColor: catColors.background.gray,
+  },
+  listContainer: {
+    padding: spacing.base,
+    flexGrow: 1,
+  },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  listHeader: {
+    height: spacing.sm,
+  },
+  listFooter: {
+    height: spacing["5xl"], // Extra space at bottom for better scrolling
+  },
+  itemSeparator: {
+    height: spacing.sm,
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
+    minHeight: 300,
   },
   emptyStateTitle: {
     fontSize: typography.fontSize.lg,
@@ -580,6 +556,7 @@ const styles = StyleSheet.create({
     color: catColors.text.primary,
     marginTop: spacing.base,
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   emptyStateText: {
     fontSize: typography.fontSize.base,
@@ -593,6 +570,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.sm,
     borderRadius: 8,
+    marginTop: spacing.sm,
   },
   retryButtonText: {
     color: catColors.text.light,
@@ -603,7 +581,6 @@ const styles = StyleSheet.create({
     backgroundColor: catColors.background.light,
     borderRadius: 12,
     padding: spacing.base,
-    marginBottom: spacing.base,
     borderWidth: 1,
     borderColor: catColors.border,
     shadowColor: catColors.secondary,
@@ -660,33 +637,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.sm,
     color: catColors.text.secondary,
     marginLeft: spacing.xs,
-  },
-  progressSection: {
-    marginBottom: spacing.sm,
-  },
-  progressInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xs,
-  },
-  progressText: {
-    fontSize: typography.fontSize.sm,
-    color: catColors.text.primary,
-  },
-  estimatedTime: {
-    fontSize: typography.fontSize.sm,
-    color: catColors.text.secondary,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: catColors.background.gray,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: catColors.primary,
+    flex: 1,
   },
   cardFooter: {
     flexDirection: "row",
@@ -696,6 +647,7 @@ const styles = StyleSheet.create({
   scheduleInfo: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
   scheduleText: {
     fontSize: typography.fontSize.sm,

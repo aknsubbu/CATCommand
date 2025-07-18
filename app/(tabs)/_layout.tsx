@@ -75,6 +75,14 @@ export default function TabLayout() {
           headerShown: false, // Hide header for this screen
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />, // Using a user/profile icon
+        }}
+      />
+      
     </Tabs>
   );
 }
