@@ -15,6 +15,7 @@ export default function AlertsScreen() {
   const [alerts, setAlerts] = useState<(Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion)[]>([]);
   const [monitoring, setMonitoring] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [stopMonitoringFunction, setStopMonitoringFunction] = useState<(() => void) | null>(null);
   const router = useRouter();
 
   const handleAlert = useCallback((alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => {
@@ -76,8 +77,8 @@ export default function AlertsScreen() {
         // Announce monitoring has started
         speak("Alert monitoring has started. Processing data file.");
         
-        const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri);
-        startMonitoring(fileContent, handleAlert);
+        const cleanup = startMonitoring(fileContent, handleAlert);
+        setStopMonitoringFunction(() => cleanup);
         setLoading(false);
       }
     } catch (error) {
@@ -89,6 +90,10 @@ export default function AlertsScreen() {
   };
 
   const stopMonitoring = () => {
+    if (stopMonitoringFunction) {
+      stopMonitoringFunction();
+      setStopMonitoringFunction(null);
+    }
     setMonitoring(false);
     speak("Alert monitoring has been stopped.");
   };
@@ -122,14 +127,14 @@ export default function AlertsScreen() {
       </ThemedView>
 
       <ScrollView style={styles.logContainer}>
-        {alerts.map((alert, index) => (
-          <ThemedView key={index.toString()} style={styles.logEntry}>
+        {alerts.map((alert) => (
+          <ThemedView key={alert.id || Math.random().toString()} style={styles.logEntry}>
             {'type' in alert && alert.type === 'training_suggestion' ? (
               <TouchableOpacity 
                 style={styles.suggestionContainer}
                 onPress={() => {
                   console.log("Navigating to TrainingModule with ID:", alert.trainingModuleId);
-                  router.push({ pathname: "/TrainingHub/TrainingModule", params: { trainingModuleId: alert.trainingModuleId } });
+                  router.push({ pathname: "/(tabs)/TrainingModule", params: { trainingModuleId: alert.trainingModuleId } });
                   speak(`Opening training module: ${alert.trainingModuleTitle}`);
                 }}
               >
@@ -140,9 +145,9 @@ export default function AlertsScreen() {
             ) : 'title' in alert ? (
               <ThemedView>
                 <ThemedText style={{ 
-                  color: alert.priority === 'critical' ? 'red' : 
-                         alert.priority === 'high' ? 'orange' : 
-                         alert.priority === 'medium' ? 'yellow' : 'blue' 
+                  color: alert.priority === 'critical' ? '#FF3B30' : 
+                         alert.priority === 'high' ? '#FF9500' : 
+                         alert.priority === 'medium' ? '#FFCC00' : '#007AFF' 
                 }}>
                   <ThemedText type="defaultSemiBold">
                     [{alert.priority?.toUpperCase()}] {alert.title}
@@ -154,7 +159,7 @@ export default function AlertsScreen() {
                 <ThemedText style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
                   {alert.machineId && `Machine: ${alert.machineId}`}
                   {alert.operatorId && ` | Operator: ${alert.operatorId}`}
-                  {alert.createdAt && ` | ${alert.createdAt.toLocaleTimeString()}`}
+                  {alert.createdAt && ` | ${new Date(alert.createdAt).toLocaleTimeString()}`}
                 </ThemedText>
               </ThemedView>
             ) : (

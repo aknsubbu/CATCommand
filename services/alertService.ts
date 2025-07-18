@@ -181,66 +181,68 @@ const checkHighAmbientTempAlert = (row: CsvRow): Alert | null => {
 
 // --- Core Logic ---
 
-export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => void): void => {
+export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => void): () => void => {
+  let timeoutId: NodeJS.Timeout;
+  let currentIndex = 0;
+  let isMonitoringActive = true;
+
+  const rows: CsvRow[] = Papa.parse(csvContent, { header: true, dynamicTyping: true, skipEmptyLines: true }).data as CsvRow[];
+
   // Process historical data for task estimation
   taskEstimationService.processHistoricalData(csvContent);
 
-  Papa.parse(csvContent, {
-    header: true,
-    dynamicTyping: true,
-    skipEmptyLines: true,
-    complete: (results) => {
-      const rows = results.data as CsvRow[];
-      let index = 0;
-
-      const processRow = () => {
-        if (index >= rows.length) {
-          onAlert({ message: "Finished processing all data.", machineId: '', timestamp: new Date().toISOString() });
-          return;
-        }
-
-        const row = rows[index];
-        if (!row) {
-          index++;
-          setTimeout(processRow, 5000);
-          return;
-        }
-
-        const alerts: (Alert | null)[] = [
-          checkSeatbeltAlert(row),
-          checkExcessiveIdlingAlert(row),
-          checkLowOilPressureAlert(row),
-          checkAbnormalBrakePressureAlert(row),
-          checkAggressiveOperationAlert(row),
-          checkHighAmbientTempAlert(row),
-        ];
-
-        const triggeredAlerts = alerts.filter(alert => alert !== null) as Alert[];
-
-        if (triggeredAlerts.length > 0) {
-          triggeredAlerts.forEach(async alert => {
-            onAlert(alert);
-            const suggestion = await trainingSuggestionService.getSuggestionForAlert(alert);
-            if (suggestion) {
-              onAlert(suggestion);
-            }
-          });
-        } else {
-          onAlert({ message: 'No problem for machine', machineId: row.Machine_ID, timestamp: row.Timestamp });
-        }
-
-        // Update machine state
-        machineState[row.Machine_ID] = {
-          lastEngineHours: row.Engine_Hours,
-          lastAcceleration: row.Acceleration_m_s2,
-          consecutiveAggressiveAccelerations: (machineState[row.Machine_ID]?.consecutiveAggressiveAccelerations || 0)
-        };
-
-        index++;
-        setTimeout(processRow, 5000);
-      };
-
-      processRow();
+  const processRow = async () => {
+    if (!isMonitoringActive || currentIndex >= rows.length) {
+      onAlert({ message: "Finished processing all data.", machineId: '', timestamp: new Date().toISOString() });
+      return;
     }
-  });
+
+    const row = rows[currentIndex];
+    if (!row) {
+      currentIndex++;
+      timeoutId = setTimeout(processRow, 5000);
+      return;
+    }
+
+    const alerts: (Alert | null)[] = [
+      checkSeatbeltAlert(row),
+      checkExcessiveIdlingAlert(row),
+      checkLowOilPressureAlert(row),
+      checkAbnormalBrakePressureAlert(row),
+      checkAggressiveOperationAlert(row),
+      checkHighAmbientTempAlert(row),
+    ];
+
+    const triggeredAlerts = alerts.filter(alert => alert !== null) as Alert[];
+
+    if (triggeredAlerts.length > 0) {
+      for (const alert of triggeredAlerts) {
+        onAlert(alert);
+        const suggestion = await trainingSuggestionService.getSuggestionForAlert(alert);
+        if (suggestion) {
+          onAlert(suggestion);
+        }
+      }
+    } else {
+      onAlert({ message: 'No problem for machine', machineId: row.Machine_ID, timestamp: row.Timestamp });
+    }
+
+    // Update machine state
+    machineState[row.Machine_ID] = {
+      lastEngineHours: row.Engine_Hours,
+      lastAcceleration: row.Acceleration_m_s2,
+      consecutiveAggressiveAccelerations: (machineState[row.Machine_ID]?.consecutiveAggressiveAccelerations || 0)
+    };
+
+    currentIndex++;
+    timeoutId = setTimeout(processRow, 5000);
+  };
+
+  processRow();
+
+  // Return a cleanup function to stop monitoring
+  return () => {
+    isMonitoringActive = false;
+    clearTimeout(timeoutId);
+  };
 };
