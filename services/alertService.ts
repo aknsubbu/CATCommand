@@ -1,5 +1,7 @@
 import { generateUUID } from './asyncService';
 import Papa from 'papaparse';
+import trainingSuggestionService, { TrainingSuggestion } from './trainingSuggestionService';
+import taskEstimationService from './taskEstimationService';
 import { Readable } from 'stream';
 
 // --- Interface Definitions ---
@@ -179,7 +181,10 @@ const checkHighAmbientTempAlert = (row: CsvRow): Alert | null => {
 
 // --- Core Logic ---
 
-export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { message: string, machineId: string, timestamp: string }) => void): void => {
+export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { message: string, machineId: string, timestamp: string } | TrainingSuggestion) => void): void => {
+  // Process historical data for task estimation
+  taskEstimationService.processHistoricalData(csvContent);
+
   Papa.parse(csvContent, {
     header: true,
     dynamicTyping: true,
@@ -213,7 +218,13 @@ export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | { m
         const triggeredAlerts = alerts.filter(alert => alert !== null) as Alert[];
 
         if (triggeredAlerts.length > 0) {
-          triggeredAlerts.forEach(alert => onAlert(alert));
+          triggeredAlerts.forEach(async alert => {
+            onAlert(alert);
+            const suggestion = await trainingSuggestionService.getSuggestionForAlert(alert);
+            if (suggestion) {
+              onAlert(suggestion);
+            }
+          });
         } else {
           onAlert({ message: 'No problem for machine', machineId: row.Machine_ID, timestamp: row.Timestamp });
         }

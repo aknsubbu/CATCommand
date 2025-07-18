@@ -48,10 +48,31 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="TaskPage"
+        options={{
+          title: 'Tasks',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="hourglass" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="Alerts"
         options={{
           title: 'Alerts',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="exclamationmark.triangle.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="TrainingHub"
+        options={{
+          title: 'Training',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.closed.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="TrainingModule"
+        options={{
+          href: null, // Hide this tab from the tab bar
+          headerShown: false, // Hide header for this screen
         }}
       />
     </Tabs>
