@@ -7,7 +7,7 @@ import pako from 'pako';
 export interface OfflineQueueItem {
   id: string;
   operatorId: string;
-  type: "inspection" | "alert" | "tracking" | "metric" | "workorder_update";
+  type: "inspection" | "alert" | "tracking" | "metric" | "workorder_update" | "alert_error";
   priority: "low" | "medium" | "high" | "critical";
   data: any; // The actual data to sync (uncompressed)
   timestamp: Date;

@@ -1,8 +1,7 @@
-import { generateUUID } from './asyncService';
 import Papa from 'papaparse';
-import trainingSuggestionService, { TrainingSuggestion } from './trainingSuggestionService';
+import { generateUUID, OfflineQueueService } from './asyncService';
 import taskEstimationService from './taskEstimationService';
-import { Readable } from 'stream';
+import trainingSuggestionService, { TrainingSuggestion } from './trainingSuggestionService';
 
 // --- Interface Definitions ---
 
@@ -55,7 +54,7 @@ export interface CsvRow {
   Ambient_Temp_C: number;
   Brake_Pressure_kPa: number;
   Acceleration_m_s2: number;
-  Oil_Pressure_kPa: number;
+  Oil_Pressure_kPa: number; // Added this property
 }
 
 interface MachineState {
@@ -65,6 +64,35 @@ interface MachineState {
 }
 
 const machineState: Record<string, MachineState> = {};
+
+// --- Helper function to safely serialize data ---
+const safeSerializeRow = (row: CsvRow): any => {
+  try {
+    // Create a clean copy of the row with only serializable data
+    return {
+      Timestamp: row.Timestamp,
+      Machine_ID: row.Machine_ID,
+      Operator_ID: row.Operator_ID,
+      Engine_Hours: row.Engine_Hours,
+      Fuel_Used_L: row.Fuel_Used_L,
+      Load_Cycles: row.Load_Cycles,
+      Idling_Time_min: row.Idling_Time_min,
+      Seatbelt_Status: row.Seatbelt_Status,
+      Safety_Alert_Triggered: row.Safety_Alert_Triggered,
+      Ambient_Temp_C: row.Ambient_Temp_C,
+      Brake_Pressure_kPa: row.Brake_Pressure_kPa,
+      Acceleration_m_s2: row.Acceleration_m_s2
+    };
+  } catch (error) {
+    // If serialization fails, return a minimal representation
+    return {
+      Machine_ID: row?.Machine_ID || 'unknown',
+      Operator_ID: row?.Operator_ID || 'unknown',
+      Timestamp: row?.Timestamp || new Date().toISOString(),
+      error: 'Failed to serialize row data'
+    };
+  }
+};
 
 // --- Alert Checking Functions ---
 
@@ -189,70 +217,152 @@ const checkHighAmbientTempAlert = (row: CsvRow): Alert | null => {
 // --- Core Logic ---
 
 export const startMonitoring = (csvContent: string, onAlert: (alert: Alert | StatusMessage | TrainingSuggestion) => void): () => void => {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: number;
   let currentIndex = 0;
   let isMonitoringActive = true;
 
-  const rows: CsvRow[] = Papa.parse(csvContent, { header: true, dynamicTyping: true, skipEmptyLines: true }).data as CsvRow[];
+  let rows: CsvRow[];
+  try {
+    rows = Papa.parse(csvContent, { header: true, dynamicTyping: true, skipEmptyLines: true }).data as CsvRow[];
+  } catch (error) {
+    console.error("Error parsing CSV content in alertService:", error);
+    onAlert({
+      id: generateUUID(),
+      message: `Error parsing CSV: ${(error as Error).message}`,
+      machineId: '',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Queue the CSV parsing error
+    OfflineQueueService.addItem({
+      operatorId: 'system',
+      type: "alert_error",
+      priority: "critical",
+      data: {
+        error: (error as Error).message,
+        context: "CSV Parsing",
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date(),
+    }).catch(queueError => {
+      console.error("Failed to queue CSV parsing error:", queueError);
+    });
+    
+    return () => {}; // Stop monitoring if CSV parsing fails
+  }
 
   // Process historical data for task estimation
   taskEstimationService.processHistoricalData(csvContent);
 
   const processRow = async () => {
-    if (!isMonitoringActive || currentIndex >= rows.length) {
-      onAlert({
-        id: generateUUID(),
-        message: "Finished processing all data.",
-        machineId: '',
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
+    try {
+      if (!isMonitoringActive || currentIndex >= rows.length) {
+        onAlert({
+          id: generateUUID(),
+          message: "Finished processing all data.",
+          machineId: '',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
 
-    const row = rows[currentIndex];
-    if (!row) {
+      const row = rows[currentIndex];
+      if (!row) {
+        currentIndex++;
+        timeoutId = setTimeout(processRow, 5000);
+        return;
+      }
+
+      const alerts: (Alert | null)[] = [
+        checkSeatbeltAlert(row),
+        checkExcessiveIdlingAlert(row),
+        checkLowOilPressureAlert(row),
+        checkAbnormalBrakePressureAlert(row),
+        checkAggressiveOperationAlert(row),
+        checkHighAmbientTempAlert(row),
+      ];
+
+      const triggeredAlerts = alerts.filter(alert => alert !== null) as Alert[];
+
+      if (triggeredAlerts.length > 0) {
+        for (const alert of triggeredAlerts) {
+          onAlert(alert);
+          const suggestion = await trainingSuggestionService.getSuggestionForAlert(alert);
+          if (suggestion) {
+            onAlert(suggestion);
+          }
+        }
+      } else {
+        onAlert({
+          id: generateUUID(),
+          message: 'No problem for machine',
+          machineId: row.Machine_ID,
+          timestamp: row.Timestamp
+        });
+      }
+
+      // Update machine state
+      machineState[row.Machine_ID] = {
+        lastEngineHours: row.Engine_Hours,
+        lastAcceleration: row.Acceleration_m_s2,
+        consecutiveAggressiveAccelerations: (machineState[row.Machine_ID]?.consecutiveAggressiveAccelerations || 0)
+      };
+
       currentIndex++;
       timeoutId = setTimeout(processRow, 5000);
-      return;
-    }
-
-    const alerts: (Alert | null)[] = [
-      checkSeatbeltAlert(row),
-      checkExcessiveIdlingAlert(row),
-      checkLowOilPressureAlert(row),
-      checkAbnormalBrakePressureAlert(row),
-      checkAggressiveOperationAlert(row),
-      checkHighAmbientTempAlert(row),
-    ];
-
-    const triggeredAlerts = alerts.filter(alert => alert !== null) as Alert[];
-
-    if (triggeredAlerts.length > 0) {
-      for (const alert of triggeredAlerts) {
-        onAlert(alert);
-        const suggestion = await trainingSuggestionService.getSuggestionForAlert(alert);
-        if (suggestion) {
-          onAlert(suggestion);
-        }
-      }
-    } else {
+    } catch (error) {
+      console.error(`Caught error processing row ${currentIndex} in alertService:`, error);
+      console.log("Attempting to queue row processing error...");
+      
       onAlert({
         id: generateUUID(),
-        message: 'No problem for machine',
-        machineId: row.Machine_ID,
-        timestamp: row.Timestamp
+        message: `Error processing data: ${(error as Error).message}`,
+        machineId: rows[currentIndex]?.Machine_ID || '',
+        timestamp: new Date().toISOString()
       });
+      
+      // Properly queue the error with await and error handling
+      try {
+        await OfflineQueueService.addItem({
+          operatorId: rows[currentIndex]?.Operator_ID || 'unknown',
+          type: "alert_error",
+          priority: "critical",
+          data: {
+            error: (error as Error).message,
+            errorStack: (error as Error).stack,
+            row: safeSerializeRow(rows[currentIndex]),
+            context: "Alert Processing",
+            rowIndex: currentIndex,
+            timestamp: new Date().toISOString()
+          },
+          timestamp: new Date(),
+        });
+        console.log("Successfully queued row processing error");
+      } catch (queueError) {
+        console.error("Failed to queue row processing error:", queueError);
+        // Optionally, you could try a simpler error format
+        try {
+          await OfflineQueueService.addItem({
+            operatorId: 'unknown',
+            type: "alert_error",
+            priority: "critical",
+            data: {
+              error: (error as Error).message,
+              context: "Alert Processing - Simplified",
+              timestamp: new Date().toISOString()
+            },
+            timestamp: new Date(),
+          });
+          console.log("Successfully queued simplified error");
+        } catch (simplifiedQueueError) {
+          console.error("Failed to queue even simplified error:", simplifiedQueueError);
+        }
+      }
+      
+      // Continue to next row
+      currentIndex++;
+      timeoutId = setTimeout(processRow, 5000);
     }
-
-    // Update machine state
-    machineState[row.Machine_ID] = {
-      lastEngineHours: row.Engine_Hours,
-      lastAcceleration: row.Acceleration_m_s2,
-      consecutiveAggressiveAccelerations: (machineState[row.Machine_ID]?.consecutiveAggressiveAccelerations || 0)
-    };
-
-    currentIndex++;
-    timeoutId = setTimeout(processRow, 5000);
   };
 
   processRow();
