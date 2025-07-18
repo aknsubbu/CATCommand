@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Button, Alert as RNAlert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Button, Alert as RNAlert, TouchableOpacity, Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -148,16 +148,18 @@ export default function TrainingModuleScreen() {
         {module.content.videoUrl && (
           <View style={styles.videoContainer}>
             <ThemedText style={styles.contentHeader}>Video Content</ThemedText>
-            {/* In a real app, you would use a video player component here */}
-            <ThemedText>Video URL: {module.content.videoUrl}</ThemedText>
+            <TouchableOpacity onPress={() => Linking.openURL(module.content.videoUrl!)}>
+              <ThemedText style={styles.linkText}>Watch Video</ThemedText>
+            </TouchableOpacity>
           </View>
         )}
 
         {module.content.documentUrl && (
           <View style={styles.documentContainer}>
             <ThemedText style={styles.contentHeader}>Reading Material</ThemedText>
-            {/* In a real app, you would use a webview or document viewer */}
-            <ThemedText>Document URL: {module.content.documentUrl}</ThemedText>
+            <TouchableOpacity onPress={() => Linking.openURL(module.content.documentUrl!)}>
+              <ThemedText style={styles.linkText}>Read Document</ThemedText>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -211,5 +213,10 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     textAlign: 'center',
+  },
+  linkText: {
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+    marginTop: 5,
   },
 });

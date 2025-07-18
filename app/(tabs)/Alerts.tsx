@@ -1,4 +1,4 @@
-import { Button, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { Button, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useState, useCallback } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from 'expo-file-system';
@@ -64,7 +64,8 @@ export default function AlertsScreen() {
               <TouchableOpacity 
                 style={styles.suggestionContainer}
                 onPress={() => {
-                  console.log("TouchableOpacity pressed!");
+                  console.log("Navigating to TrainingModule with ID:", alert.trainingModuleId);
+                  router.push({ pathname: "/TrainingHub/TrainingModule", params: { trainingModuleId: alert.trainingModuleId } });
                 }}
               >
                 <ThemedText type="defaultSemiBold">{alert.title}</ThemedText>

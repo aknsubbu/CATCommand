@@ -702,6 +702,12 @@ import {
       return this.update(this.collections.SCHEDULED_TASKS, taskId, updateData);
     }
   
+    // ===== TRAINING MODULE SPECIFIC OPERATIONS =====
+
+    async createTrainingModule(moduleData: Omit<TrainingModule, keyof BaseDocument>): Promise<string> {
+      return this.create(this.collections.TRAINING_MODULES, moduleData);
+    }
+
     // ===== INSPECTION SPECIFIC OPERATIONS =====
   
     async createInspection(inspectionData: Omit<Inspection, keyof BaseDocument>): Promise<string> {
